@@ -63,7 +63,7 @@ export default function MarketsPage() {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
+                  "px-3 py-1.5 text-sm font-medium rounded transition-colors",
                   activeCategory === cat
                     ? "bg-primary/10 text-primary border border-primary/20"
                     : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
@@ -75,52 +75,58 @@ export default function MarketsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-px bg-border rounded-lg overflow-hidden sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((market, i) => (
-            <FadeInView key={market.id} delay={i * 0.05}>
+            <FadeInView key={market.id} delay={i * 0.03}>
               <Link href={`/markets/${market.id}`}>
-                <Card className="h-full border-border/50 card-hover cursor-pointer group">
-                  <CardContent className="p-5 flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge variant="outline" className="text-xs">{market.source}</Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <BarChart3 className="h-3 w-3" />
-                        {market.volume}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-medium leading-relaxed flex-1 mb-4">
-                      {market.question}
-                    </h3>
-                    <div className="space-y-3 mt-auto">
-                      <div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                          <span>YES</span>
-                          <span className="font-semibold text-foreground">{market.odds}%</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full odds-bar-yes"
-                            style={{ width: `${market.odds}%` }}
-                          />
-                        </div>
+                <div className="bg-card p-5 h-full transition-colors hover:bg-muted cursor-pointer flex flex-col">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className="text-xs">{market.source}</Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <BarChart3 className="h-3 w-3" />
+                      {market.volume}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium leading-relaxed flex-1 mb-4">
+                    {market.question}
+                  </h3>
+                  <div className="space-y-3 mt-auto">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                        <span>YES</span>
+                        <span className="font-semibold font-mono text-foreground">{market.odds}%</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        {market.edge !== null ? (
-                          <span className={cn("edge-badge", market.edge > 0 ? "" : "opacity-60")}>
-                            {market.edge > 0 ? "+" : ""}{market.edge}% edge
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No AI edge</span>
-                        )}
-                        <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-up"
+                          style={{ width: `${market.odds}%` }}
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center justify-between">
+                      {market.edge !== null ? (
+                        <span className={cn("text-xs font-mono font-semibold", market.edge > 0 ? "text-up" : "text-down")}>
+                          {market.edge > 0 ? "+" : ""}{market.edge}% edge
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No AI edge</span>
+                      )}
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors" />
+                    </div>
+                  </div>
+                </div>
               </Link>
             </FadeInView>
           ))}
         </div>
+
+        {filtered.length === 0 && (
+          <div className="text-center py-20 text-muted-foreground">
+            <Search className="h-12 w-12 mx-auto mb-4 opacity-30" />
+            <p>No markets found</p>
+            <p className="text-sm mt-1">Try a different search term or category</p>
+          </div>
+        )}
       </div>
     </div>
   )

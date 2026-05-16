@@ -11,3 +11,4 @@ dist/
 build/
 .next/
 contracts/lib/
+frontend/dev.log

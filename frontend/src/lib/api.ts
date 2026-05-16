@@ -1,12 +1,27 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+let clientToken: string | null = null
+
+export function setClientToken(token: string | null) {
+  clientToken = token
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+
+function getToken(): string | null {
+  if (typeof window === "undefined") return null
+  return clientToken
+}
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = getToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { ...headers, ...options?.headers as Record<string, string> },
     ...options,
-  });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
 }
 
 export const api = {
@@ -27,4 +42,8 @@ export const api = {
   getSubscriptionStatus: () => fetchAPI('/subscriptions/status'),
 
   getBuilderFees: () => fetchAPI('/builder/fees'),
-};
+
+  register: (email: string, password: string) => fetchAPI('/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) => fetchAPI<{ access_token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  getMe: () => fetchAPI('/users/me'),
+}

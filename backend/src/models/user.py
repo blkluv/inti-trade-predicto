@@ -11,7 +11,11 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=True)
+    avatar_url: Mapped[str] = mapped_column(Text, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
+    oauth_provider: Mapped[str] = mapped_column(String(50), nullable=True)
+    oauth_provider_id: Mapped[str] = mapped_column(String(255), nullable=True)
     wallet_address: Mapped[str] = mapped_column(String(255), nullable=True)
     subscription_tier: Mapped[str] = mapped_column(String(50), default="free")
     subscription_expires: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)

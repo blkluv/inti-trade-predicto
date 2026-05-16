@@ -71,7 +71,7 @@ export default function MarketDetailPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <Badge variant="outline" className="text-xs">Polymarket</Badge>
                     <Badge variant="secondary" className="text-xs">Economics</Badge>
-                    <Badge variant="edge" className="text-xs">
+                    <Badge variant="yellow" className="text-xs">
                       <Brain className="mr-1 h-3 w-3" />
                       AI Tracked
                     </Badge>
@@ -102,29 +102,29 @@ export default function MarketDetailPage() {
                       <AreaChart data={priceHistory}>
                         <defs>
                           <linearGradient id="yesGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#16a34a" stopOpacity={0.2} />
-                            <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#0ecb81" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#0ecb81" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="aiGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
-                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#FCD535" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#FCD535" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} domain={[0.3, 0.8]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b3139" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} domain={[0.3, 0.8]} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
                         <Tooltip
-                          contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "13px" }}
+                          contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "13px" }}
                           formatter={(value) => `${(Number(value) * 100).toFixed(1)}%`}
                         />
-                        <Area type="monotone" dataKey="yes" stroke="#16a34a" fill="url(#yesGrad)" strokeWidth={2} name="Market Price" />
-                        <Area type="monotone" dataKey="ai" stroke="#f59e0b" fill="url(#aiGrad)" strokeWidth={2} strokeDasharray="5 5" name="AI Prediction" />
+                        <Area type="monotone" dataKey="yes" stroke="#0ecb81" fill="url(#yesGrad)" strokeWidth={2} name="Market Price" />
+                        <Area type="monotone" dataKey="ai" stroke="#FCD535" fill="url(#aiGrad)" strokeWidth={2} strokeDasharray="5 5" name="AI Prediction" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="flex items-center justify-center gap-6 mt-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-green-500 rounded" />Market Price</span>
-                    <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-amber-500 rounded" />AI Prediction</span>
+                    <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-up rounded" />Market Price</span>
+                    <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-primary rounded" />AI Prediction</span>
                   </div>
                 </CardContent>
               </Card>
@@ -145,7 +145,7 @@ export default function MarketDetailPage() {
                         <p className="text-sm font-medium truncate">{article.title}</p>
                         <p className="text-xs text-muted-foreground mt-1">{article.source} &middot; {article.date}</p>
                       </div>
-                      <Badge variant={article.sentiment === "positive" ? "success" : "outline"} className="shrink-0 text-xs capitalize">
+                      <Badge variant={article.sentiment === "positive" ? "up" : "outline"} className="shrink-0 text-xs capitalize">
                         {article.sentiment}
                       </Badge>
                     </div>
@@ -157,16 +157,16 @@ export default function MarketDetailPage() {
 
           <div className="space-y-6">
             <FadeInView direction="none" delay={0.05}>
-              <Card className="border-border/50 glow-amber">
+              <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">AI Prediction Gauge</p>
                     <div className="relative inline-flex items-center justify-center">
                       <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-                        <circle cx="60" cy="60" r="54" fill="none" stroke="#f59e0b" strokeWidth="8" strokeDasharray={`${(65 / 100) * 339.29} 339.29`} strokeLinecap="round" />
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#FCD535" strokeWidth="8" strokeDasharray={`${(65 / 100) * 339.29} 339.29`} strokeLinecap="round" />
                       </svg>
-                      <span className="absolute text-3xl font-bold text-gradient-amber">65%</span>
+                      <span className="absolute text-3xl font-bold text-foreground">65%</span>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">AI predicts YES with 65% confidence</p>
                   </div>
@@ -183,7 +183,7 @@ export default function MarketDetailPage() {
                       <span className="font-semibold">62% YES</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full odds-bar-yes" style={{ width: "62%" }} />
+                      <div className="h-full rounded-full bg-up" style={{ width: "62%" }} />
                     </div>
                   </div>
                   <div>
@@ -233,7 +233,7 @@ export default function MarketDetailPage() {
                     <Separator />
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Confidence</span>
-                      <Badge variant="success" className="text-xs">High</Badge>
+                      <Badge variant="up" className="text-xs">High</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -281,15 +281,15 @@ export default function MarketDetailPage() {
                         <div className="flex items-center justify-between text-sm mb-1">
                           <span className="text-muted-foreground">{s.source}</span>
                           <span className="text-xs">
-                            <span className="text-green-400">{s.positive}%</span>
+                            <span className="text-up">{s.positive}%</span>
                             {" / "}
-                            <span className="text-red-400">{s.negative}%</span>
+                            <span className="text-down">{s.negative}%</span>
                           </span>
                         </div>
                         <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                          <div className="bg-green-500 h-full" style={{ width: `${s.positive}%` }} />
-                          <div className="bg-neutral-500 h-full" style={{ width: `${s.neutral}%` }} />
-                          <div className="bg-red-500 h-full" style={{ width: `${s.negative}%` }} />
+                          <div className="bg-up h-full" style={{ width: `${s.positive}%` }} />
+                          <div className="bg-muted-foreground h-full" style={{ width: `${s.neutral}%` }} />
+                          <div className="bg-down h-full" style={{ width: `${s.negative}%` }} />
                         </div>
                       </div>
                     ))}
@@ -299,11 +299,11 @@ export default function MarketDetailPage() {
             </FadeInView>
 
             <div className="flex gap-3">
-              <Link href="#" className={cn(buttonVariants({ size: "lg" }), "flex-1 bg-green-600 hover:bg-green-700 text-white glow-amber")}>
+              <Link href="#" className="inline-flex items-center justify-center flex-1 h-11 text-sm font-semibold rounded bg-up text-white hover:brightness-110 transition-all">
                 <TrendingUp className="mr-1.5 h-4 w-4" />
                 Buy YES
               </Link>
-              <Link href="#" className={cn(buttonVariants({ size: "lg" }), "flex-1 bg-red-600 hover:bg-red-700 text-white")}>
+              <Link href="#" className="inline-flex items-center justify-center flex-1 h-11 text-sm font-semibold rounded bg-down text-white hover:brightness-110 transition-all">
                 <TrendingDown className="mr-1.5 h-4 w-4" />
                 Buy NO
               </Link>

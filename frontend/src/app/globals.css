@@ -5,10 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
   --color-popover: hsl(var(--popover));
@@ -26,69 +27,99 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --color-up: hsl(var(--up));
+  --color-down: hsl(var(--down));
+  --color-yellow: hsl(var(--yellow));
+  --color-yellow-foreground: hsl(var(--yellow-foreground));
+  --color-light-bg: hsl(var(--light-bg));
+  --color-light-foreground: hsl(var(--light-foreground));
+  --color-light-muted: hsl(var(--light-muted));
+  --color-light-border: hsl(var(--light-border));
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
 }
 
 :root {
-  --background: 240 10% 4%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 6%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 6%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 38 92% 50%;
-  --primary-foreground: 0 0% 0%;
-  --secondary: 240 5% 16%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 5% 16%;
-  --muted-foreground: 240 5% 65%;
-  --accent: 38 92% 50%;
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5% 16%;
-  --input: 240 5% 16%;
-  --ring: 38 92% 50%;
-  --radius: 0.75rem;
-  --success: 142 76% 36%;
-  --warning: 38 92% 50%;
-  --chart-1: 38 92% 50%;
-  --chart-2: 142 76% 36%;
-  --chart-3: 0 84% 60%;
+  --background: 220 15% 5%;
+  --foreground: 210 6% 87%;
+  --card: 216 20% 14%;
+  --card-foreground: 210 6% 87%;
+  --popover: 214 16% 20%;
+  --popover-foreground: 210 6% 87%;
+  --primary: 45 97% 60%;
+  --primary-foreground: 220 15% 5%;
+  --secondary: 216 20% 14%;
+  --secondary-foreground: 210 6% 87%;
+  --muted: 216 15% 16%;
+  --muted-foreground: 216 10% 56%;
+  --accent: 45 97% 60%;
+  --accent-foreground: 220 15% 5%;
+  --destructive: 352 91% 62%;
+  --destructive-foreground: 0 0% 100%;
+  --up: 154 86% 43%;
+  --down: 352 91% 62%;
+  --yellow: 45 97% 60%;
+  --yellow-foreground: 220 15% 5%;
+  --light-bg: 0 0% 98%;
+  --light-foreground: 216 20% 14%;
+  --light-muted: 216 10% 56%;
+  --light-border: 0 0% 90%;
+  --border: 214 16% 20%;
+  --input: 214 16% 20%;
+  --ring: 45 97% 60%;
+  --radius: 0.25rem;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+  }
 }
 
-.glow-amber {
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 40px rgba(245, 158, 11, 0.05);
+.font-number {
+  font-feature-settings: "tnum" 1;
 }
 
-.glow-card {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
+@keyframes price-up {
+  0% { color: hsl(var(--up)); }
+  100% { color: inherit; }
 }
 
-.glow-card:hover {
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
+@keyframes price-down {
+  0% { color: hsl(var(--down)); }
+  100% { color: inherit; }
 }
 
-.gradient-amber {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.02));
+.flash-up {
+  animation: price-up 1.5s ease-out;
 }
 
-.grid-bg {
-  background-image: radial-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px);
-  background-size: 30px 30px;
+.flash-down {
+  animation: price-down 1.5s ease-out;
 }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.live-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes slide-up-fade {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-1 { animation: slide-up-fade 0.4s ease-out 0.1s both; }
+.stagger-2 { animation: slide-up-fade 0.4s ease-out 0.2s both; }
+.stagger-3 { animation: slide-up-fade 0.4s ease-out 0.3s both; }
+.stagger-4 { animation: slide-up-fade 0.4s ease-out 0.4s both; }

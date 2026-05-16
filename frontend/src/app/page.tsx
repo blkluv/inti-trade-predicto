@@ -1,245 +1,431 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useRef, useState } from "react"
+import { motion, useInView, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { FadeInView } from "@/components/fade-in-view"
 import {
   TrendingUp, Shield, BarChart3, Brain, Zap, Globe, Target,
-  CheckCircle2, ChevronRight, ArrowUpRight, Activity, Layers,
+  ChevronRight, ArrowUpRight, Activity, Layers, Check, Sparkles,
+  ChevronDown, Lock, Server, Star,
 } from "lucide-react"
 
+function FadeInSection({ children, delay = 0, className }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: "-80px" })
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function CountUp({ value, suffix = "", decimals = 0 }: { value: number; suffix?: string; decimals?: number }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
+  return (
+    <motion.span
+      ref={ref}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      className="font-mono font-bold tracking-tight"
+    >
+      {isInView ? (
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.01 }}
+        >
+          <CounterFrom zero={0} to={value} decimals={decimals} />
+          {suffix}
+        </motion.span>
+      ) : (
+        <span>0{suffix}</span>
+      )}
+    </motion.span>
+  )
+}
+
+function CounterFrom({ zero, to, decimals = 0 }: { zero: number; to: number; decimals?: number }) {
+  const [count, setCount] = useState(zero)
+  const started = useRef(false)
+
+  useInView(
+    { current: null },
+    { once: true }
+  )
+
+  if (!started.current) {
+    started.current = true
+    const steps = 30
+    const increment = (to - zero) / steps
+    let current = zero
+    const timer = setInterval(() => {
+      current += increment
+      if (current >= to) {
+        current = to
+        clearInterval(timer)
+      }
+      setCount(current)
+    }, 40)
+  }
+
+  return <span>{count.toFixed(decimals)}</span>
+}
+
 const stats = [
-  { value: "94.2%", label: "Prediction Accuracy", sub: "30-day rolling average" },
-  { value: "$12.4M", label: "Tracked Volume", sub: "Across all major markets" },
-  { value: "3,200+", label: "Signals Generated", sub: "And counting" },
-  { value: "< 2s", label: "Signal Latency", sub: "Real-time intelligence" },
+  { value: 94.2, suffix: "%", label: "Prediction Accuracy", sub: "30-day rolling average", decimals: 1 },
+  { value: 12.4, suffix: "M", label: "Tracked Volume", sub: "Across all major markets", decimals: 1 },
+  { value: 3200, suffix: "+", label: "Signals Generated", sub: "And counting", decimals: 0 },
+  { value: 2, suffix: "s", label: "Signal Latency", sub: "Real-time intelligence", decimals: 0 },
 ]
 
 const steps = [
-  { icon: Globe, title: "Connect Markets", desc: "Seamlessly connect to Polymarket, Kalshi, and other prediction platforms via our API.", number: "01" },
+  { icon: Globe, title: "Connect Markets", desc: "Seamlessly connect to Polymarket, Kalshi, and other prediction platforms via our unified API.", number: "01" },
   { icon: Brain, title: "AI Analysis", desc: "Our ensemble of LLMs analyzes news, on-chain data, and market sentiment in real-time.", number: "02" },
   { icon: Zap, title: "Smart Signals", desc: "Get actionable trade signals with edge calculations, Kelly sizing, and full reasoning traces.", number: "03" },
 ]
 
 const features = [
   { icon: BarChart3, title: "Real-time Intelligence", desc: "Live signal generation with millisecond latency across all supported markets." },
-  { icon: Globe, title: "Multi-market Coverage", desc: "Polymarket, Kalshi, PredictIt, and more — all in one unified dashboard." },
+  { icon: Globe, title: "Multi-market Coverage", desc: "Polymarket, Kalshi, PredictIt, and more in one unified dashboard." },
   { icon: Target, title: "Smart Position Sizing", desc: "Kelly criterion-based sizing with configurable risk parameters and drawdown protection." },
   { icon: Layers, title: "Full Reasoning Traces", desc: "Every signal includes the complete AI reasoning chain. Audit every prediction." },
 ]
 
-const plans = [
-  { name: "Free", price: "$0", desc: "Get started with basic signals", features: ["5 signals/day", "24h delay", "Basic metrics", "Email alerts"] },
-  { name: "Pro", price: "$49", desc: "For serious traders", features: ["Unlimited signals", "Real-time delivery", "Full reasoning traces", "API access", "Kelly sizing calc", "Priority support"], popular: true },
-  { name: "Enterprise", price: "$249", desc: "For institutions", features: ["Everything in Pro", "Custom models", "Dedicated infra", "White-label options", "SLA guarantee", "Team accounts"] },
+const topMarkets = [
+  { question: "Will BTC exceed $150k by Q3 2026?", yes: 62, volume: "$2.4M", change: "+8.3%" },
+  { question: "Will the Fed cut rates in June 2026?", yes: 45, volume: "$1.8M", change: "+5.1%" },
+  { question: "Will AI regulation pass in 2026?", yes: 38, volume: "$890K", change: "-2.4%" },
+  { question: "Will Super Bowl LX MVP be a QB?", yes: 78, volume: "$520K", change: "+1.2%" },
+]
+
+const faqItems = [
+  { q: "What is Inti Trade Predicto?", a: "Inti Trade Predicto is an AI-powered prediction market intelligence platform that aggregates signals from multiple markets and provides actionable trading insights with full reasoning transparency." },
+  { q: "How accurate are the signals?", a: "Our ensemble AI system maintains a 94.2% accuracy rate on a 30-day rolling average. We use multiple LLMs cross-validating each other to reduce bias and improve prediction quality." },
+  { q: "Which markets do you support?", a: "We currently support Polymarket, Kalshi, PredictIt, and more. Our unified API lets you access all markets from a single dashboard." },
+  { q: "Is there a free tier?", a: "Yes! Our Free tier gives you 5 signals per day with 24-hour delay and basic metrics. Upgrade to Pro for unlimited real-time signals with full reasoning traces." },
+  { q: "Can I build on top of your API?", a: "Pro and Enterprise tiers include API access. Enterprise customers also get custom models, dedicated infrastructure, and white-label options." },
 ]
 
 export default function Home() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+
   return (
     <div className="flex flex-col">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-50" />
-        <div className="relative mx-auto max-w-7xl px-4 pt-20 pb-16 sm:px-6 lg:px-8 lg:pt-32 lg:pb-24">
+      {/* HERO */}
+      <section className="relative overflow-hidden border-b border-border">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-28 lg:pb-20">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
-            className="mx-auto max-w-3xl text-center"
+            transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+            className="mx-auto max-w-4xl text-center"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="mb-6"
             >
-              <Badge variant="edge" className="mb-6 px-4 py-1.5 text-sm">
-                <Activity className="mr-1.5 h-3.5 w-3.5" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-border bg-card text-muted-foreground">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-up opacity-75 live-dot" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-up" />
+                </span>
                 AI-Powered Prediction Intelligence
-              </Badge>
+              </span>
             </motion.div>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              Where intelligence{" "}
-              <span className="text-gradient-amber">meets prediction</span>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
+              Trade Prediction Markets with{" "}
+              <span className="text-primary">Intelligence</span>
             </h1>
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto"
+              transition={{ delay: 0.25, duration: 0.5 }}
+              className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             >
-              Harness the power of ensemble AI to discover, analyze, and trade prediction markets
+              Harness ensemble AI to discover, analyze, and trade prediction markets
               with institutional-grade intelligence. Real-time signals. Full reasoning transparency.
             </motion.p>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="mt-10 flex items-center justify-center gap-4 flex-col sm:flex-row"
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="mt-8 flex items-center justify-center gap-3 flex-col sm:flex-row"
             >
-              <Link href="/signals" className={cn(buttonVariants({ size: "lg" }), "h-12 px-8 text-base bg-primary text-primary-foreground hover:bg-primary/90 glow-amber")}>
+              <Link
+                href="/signals"
+                className="inline-flex items-center justify-center h-11 px-7 text-sm font-semibold rounded bg-primary text-yellow-foreground hover:brightness-110 transition-all"
+              >
                 See Live Signals
                 <ChevronRight className="ml-1.5 h-4 w-4" />
               </Link>
-              <Link href="/markets" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 px-8 text-base")}>
+              <Link
+                href="/markets"
+                className="inline-flex items-center justify-center h-11 px-7 text-sm font-semibold rounded border border-border bg-card text-foreground hover:bg-muted transition-all"
+              >
                 Browse Markets
                 <ArrowUpRight className="ml-1.5 h-4 w-4" />
               </Link>
             </motion.div>
           </motion.div>
 
+          {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.6 }}
-            className="mt-20 grid grid-cols-2 gap-4 md:grid-cols-4"
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mt-16 grid grid-cols-2 gap-px bg-border rounded-lg overflow-hidden lg:grid-cols-4"
           >
             {stats.map((stat) => (
-              <Card key={stat.label} className="border-border/50 bg-card/50 backdrop-blur-sm card-hover">
-                <CardContent className="p-5 text-center">
-                  <span className="text-3xl font-bold tracking-tight text-gradient-amber">{stat.value}</span>
-                  <p className="mt-1 text-sm font-medium text-foreground">{stat.label}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{stat.sub}</p>
-                </CardContent>
-              </Card>
+              <div key={stat.label} className="bg-card p-5 sm:p-6 text-center">
+                <div className="text-2xl sm:text-3xl lg:text-4xl text-foreground">
+                  <CountUp value={stat.value} suffix={stat.suffix} decimals={stat.decimals} />
+                </div>
+                <p className="mt-1.5 text-sm font-medium text-foreground">{stat.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{stat.sub}</p>
+              </div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      <section className="border-t border-border/50 py-20">
+      {/* HOW IT WORKS */}
+      <section className="border-b border-border py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeInView className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">How It Works</h2>
-            <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">From raw market data to actionable signals in three steps</p>
-          </FadeInView>
-          <div className="grid gap-8 md:grid-cols-3">
+          <FadeInSection className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">How It Works</h2>
+            <p className="mt-3 text-muted-foreground">From raw market data to actionable signals in three steps</p>
+          </FadeInSection>
+          <div className="grid gap-px bg-border rounded-lg overflow-hidden sm:grid-cols-3">
             {steps.map((step, i) => (
-              <FadeInView key={step.title} delay={i * 0.15}>
-                <Card className="relative h-full border-border/50 card-hover overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4">
-                    <span className="text-4xl font-black text-primary/10">{step.number}</span>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
-                      <step.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                  </CardContent>
-                </Card>
-              </FadeInView>
+              <FadeInSection key={step.title} delay={i * 0.15} className="bg-card p-6 sm:p-8">
+                <span className="text-3xl font-bold text-muted-foreground/20">{step.number}</span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mt-4 mb-4">
+                  <step.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+              </FadeInSection>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-t border-border/50 py-20 grid-bg">
+      {/* MARKETS TABLE CARD */}
+      <section className="border-b border-border py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeInView className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for serious traders</h2>
-            <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">Everything you need to trade prediction markets with confidence</p>
-          </FadeInView>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature, i) => (
-              <FadeInView key={feature.title} delay={i * 0.1}>
-                <Card className="h-full border-border/50 card-hover">
-                  <CardContent className="p-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4">
-                      <feature.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
-                  </CardContent>
-                </Card>
-              </FadeInView>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-border/50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeInView className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Simple, transparent pricing</h2>
-            <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">Start free, upgrade when you need more power</p>
-          </FadeInView>
-          <div className="grid gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
-            {plans.map((plan, i) => (
-              <FadeInView key={plan.name} delay={i * 0.1}>
-                <Card className={cn("relative border-border/50 card-hover", plan.popular && "border-primary/30 glow-amber")}>
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge variant="edge" className="px-3 py-1 text-xs">RECOMMENDED</Badge>
-                    </div>
-                  )}
-                  <CardContent className="p-6 pt-8">
-                    <h3 className="text-lg font-semibold">{plan.name}</h3>
-                    <div className="mt-3 flex items-baseline gap-1">
-                      <span className="text-3xl font-bold">{plan.price}</span>
-                      {plan.price !== "$0" && <span className="text-sm text-muted-foreground">/month</span>}
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
-                    <ul className="mt-6 space-y-3">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button className={cn("mt-8 w-full", plan.popular ? "bg-primary text-primary-foreground hover:bg-primary/90" : "")} variant={plan.popular ? "default" : "outline"}>
-                      {plan.name === "Free" ? "Get Started" : `Start ${plan.name}`}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </FadeInView>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-border/50 py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <FadeInSection className="flex items-center justify-between mb-6">
             <div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-bold">Inti Trade Predicto</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Trending Markets</h2>
+              <p className="mt-1 text-muted-foreground">Top prediction markets by volume</p>
+            </div>
+            <Link
+              href="/markets"
+              className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              View All <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </FadeInSection>
+
+          <FadeInSection delay={0.1}>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="hidden sm:grid sm:grid-cols-[1fr_120px_120px_100px] gap-4 px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-card border-b border-border">
+                <span>Market</span>
+                <span className="text-right">Yes %</span>
+                <span className="text-right">Volume</span>
+                <span className="text-right">24h</span>
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">AI-powered prediction market intelligence platform.</p>
+              {topMarkets.map((market, i) => (
+                <Link
+                  key={market.question}
+                  href="/markets"
+                  className={cn(
+                    "block px-5 py-4 transition-colors hover:bg-muted",
+                    i < topMarkets.length - 1 && "border-b border-border"
+                  )}
+                >
+                  <div className="sm:grid sm:grid-cols-[1fr_120px_120px_100px] sm:gap-4 sm:items-center">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">#{i + 1}</span>
+                      <p className="text-sm font-medium leading-snug">{market.question}</p>
+                    </div>
+                    <div className="flex sm:block items-center justify-between mt-2 sm:mt-0">
+                      <span className="sm:hidden text-xs text-muted-foreground">Yes %</span>
+                      <div className="flex items-center gap-2 sm:justify-end">
+                        <div className="h-1.5 w-16 sm:w-20 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-up"
+                            style={{ width: `${market.yes}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-mono font-semibold">{market.yes}%</span>
+                      </div>
+                    </div>
+                    <div className="flex sm:block items-center justify-between mt-1 sm:mt-0">
+                      <span className="sm:hidden text-xs text-muted-foreground">Volume</span>
+                      <span className="text-sm font-mono text-right sm:text-right">{market.volume}</span>
+                    </div>
+                    <div className="hidden sm:flex items-center justify-end">
+                      <span className={cn(
+                        "text-sm font-mono font-semibold",
+                        market.change.startsWith("+") ? "text-up" : "text-down"
+                      )}>
+                        {market.change}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-3">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/markets" className="hover:text-foreground transition-colors">Markets</Link></li>
-                <li><Link href="/signals" className="hover:text-foreground transition-colors">Signals</Link></li>
-                <li><Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-              </ul>
+            <div className="mt-4 text-center sm:hidden">
+              <Link href="/markets" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View All Markets <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-3">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><span className="hover:text-foreground transition-colors cursor-pointer">About</span></li>
-                <li><span className="hover:text-foreground transition-colors cursor-pointer">Blog</span></li>
-                <li><span className="hover:text-foreground transition-colors cursor-pointer">Careers</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-3">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><span className="hover:text-foreground transition-colors cursor-pointer">Privacy</span></li>
-                <li><span className="hover:text-foreground transition-colors cursor-pointer">Terms</span></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-border/50 text-center text-xs text-muted-foreground">
-            &copy; 2024 Inti Trade Predicto. All rights reserved.
+          </FadeInSection>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="border-b border-border py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FadeInSection className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Built for Serious Traders</h2>
+            <p className="mt-3 text-muted-foreground">Everything you need to trade prediction markets with confidence</p>
+          </FadeInSection>
+          <div className="grid gap-px bg-border rounded-lg overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature, i) => (
+              <FadeInSection key={feature.title} delay={i * 0.1} className="bg-card p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4">
+                  <feature.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+              </FadeInSection>
+            ))}
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* FUNDS SAFU BAND */}
+      <section className="border-b border-border py-12 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FadeInSection className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            <div className="flex-shrink-0">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Shield className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <div className="text-center lg:text-left">
+              <h3 className="text-xl font-bold">Funds Are SAFU</h3>
+              <p className="mt-2 text-muted-foreground max-w-2xl">
+                Your data and signals are protected by enterprise-grade encryption. We never hold your funds —
+                trades execute directly on your connected exchange accounts. Industry-standard security
+                practices, audited regularly.
+              </p>
+            </div>
+            <div className="flex items-center gap-6 lg:ml-auto shrink-0">
+              <div className="text-center">
+                <Lock className="h-5 w-5 text-up mx-auto" />
+                <span className="text-xs text-muted-foreground mt-1 block">AES-256</span>
+              </div>
+              <div className="text-center">
+                <Server className="h-5 w-5 text-up mx-auto" />
+                <span className="text-xs text-muted-foreground mt-1 block">SOC 2</span>
+              </div>
+              <div className="text-center">
+                <Shield className="h-5 w-5 text-up mx-auto" />
+                <span className="text-xs text-muted-foreground mt-1 block">2FA</span>
+              </div>
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-b border-border py-16 lg:py-20">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <FadeInSection className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Frequently Asked Questions</h2>
+            <p className="mt-3 text-muted-foreground">Everything you need to know about Inti Trade Predicto</p>
+          </FadeInSection>
+          <FadeInSection delay={0.1}>
+            <div className="space-y-px bg-border rounded-lg overflow-hidden">
+              {faqItems.map((item, i) => (
+                <div key={i} className="bg-card">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    <span>{item.q}</span>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200",
+                      openFaq === i && "rotate-180"
+                    )} />
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                          {item.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
+
+      {/* CTA BAND */}
+      <section className="py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FadeInSection className="rounded-lg bg-card border border-border p-8 sm:p-12 lg:p-16 text-center">
+            <Sparkles className="h-8 w-8 text-primary mx-auto" />
+            <h2 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+              Start Trading Smarter Today
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
+              Join thousands of traders using AI-powered intelligence to make better prediction market decisions.
+            </p>
+            <div className="mt-8 flex items-center justify-center gap-3 flex-col sm:flex-row">
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center h-11 px-7 text-sm font-semibold rounded bg-primary text-yellow-foreground hover:brightness-110 transition-all"
+              >
+                Get Started Free
+                <ChevronRight className="ml-1.5 h-4 w-4" />
+              </Link>
+              <Link
+                href="/markets"
+                className="inline-flex items-center justify-center h-11 px-7 text-sm font-semibold rounded border border-border bg-background text-foreground hover:bg-muted transition-all"
+              >
+                Explore Markets
+              </Link>
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
     </div>
   )
 }

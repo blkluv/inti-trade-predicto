@@ -3,31 +3,25 @@ import logging
 from datetime import datetime, timezone
 
 import httpx
-from sqlalchemy import select, text
+from sqlalchemy import select
 
 from src.agents.base_agent import BaseAgent
-from src.models.market import Market
+from src.models.market import Market, MarketPrice
 
 logger = logging.getLogger(__name__)
 
 
 class DataAgent(BaseAgent):
     async def collect_market_data(self) -> list[dict]:
-        gamma_url = self.providers.get(
-            "polymarket_gamma", "https://gamma-api.polymarket.com"
-        )
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.get(
-                f"{gamma_url}/markets",
-                params={
-                    "tag": "prediction",
-                    "order": "volume",
-                    "limit": 50,
-                    "closed": "false",
-                },
-            )
-            resp.raise_for_status()
-            raw = resp.json()
+        pm_provider = self.providers.get("polymarket")
+        if pm_provider is None:
+            logger.error("Polymarket provider not available")
+            return []
+
+        raw = await pm_provider.get_all_markets_flat()
+        if not raw:
+            logger.warning("No market data from any source")
+            return []
 
         markets = []
         async with self.db_session_factory() as session:
@@ -36,25 +30,36 @@ class DataAgent(BaseAgent):
                 if not market_id:
                     continue
 
+                outcomes = item.get("outcomes", [])
+                current_odds = item.get("bestPrice") or item.get("price")
+                if current_odds is None and outcomes:
+                    current_odds = max(
+                        (o.get("probability", 0) for o in outcomes), default=None
+                    )
+
                 market = Market(
                     id=str(market_id),
                     source="polymarket",
                     question=item.get("question", ""),
                     description=item.get("description", ""),
-                    category=item.get("category", ""),
-                    outcomes=item.get("outcomes", []),
-                    current_odds=item.get("bestPrice", item.get("price"))
-                    if item.get("bestPrice") or item.get("price")
-                    else None,
-                    volume_24h=float(item.get("volume24hr", 0)),
+                    category=(
+                        item.get("category")
+                        or (item.get("categories") or [None])[0]
+                        or "prediction"
+                    ),
+                    outcomes=outcomes,
+                    current_odds=current_odds,
+                    volume_24h=float(item.get("volume24hr", item.get("volume_24h", 0))),
                     liquidity=float(item.get("liquidity", 0)),
                     end_date=(
-                        datetime.fromisoformat(item["endDate"].replace("Z", "+00:00"))
+                        datetime.fromisoformat(
+                            item["endDate"].replace("Z", "+00:00")
+                        )
                         if item.get("endDate")
                         else None
                     ),
                 )
-                session.merge(market)
+                await session.merge(market)
                 markets.append(
                     {
                         "id": market.id,
@@ -63,6 +68,26 @@ class DataAgent(BaseAgent):
                         "category": market.category,
                     }
                 )
+
+            await session.flush()
+
+            for item in raw:
+                market_id = item.get("id") or item.get("conditionId")
+                if not market_id:
+                    continue
+                current_odds = item.get("bestPrice") or item.get("price")
+                outcomes = item.get("outcomes", [])
+                if current_odds is None and outcomes:
+                    current_odds = max(
+                        (o.get("probability", 0) for o in outcomes), default=None
+                    )
+                if current_odds is not None:
+                    price_entry = MarketPrice(
+                        market_id=str(market_id),
+                        price=current_odds,
+                        volume=float(item.get("volume24hr", item.get("volume_24h", 0))),
+                    )
+                    session.add(price_entry)
 
             await session.commit()
 

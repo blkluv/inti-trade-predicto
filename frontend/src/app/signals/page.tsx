@@ -75,57 +75,54 @@ export default function SignalsPage() {
           </div>
         </motion.div>
 
-        <div className="space-y-3">
+        <div className="space-y-px bg-border rounded-lg overflow-hidden">
           {filtered.map((signal, i) => (
             <FadeInView key={signal.id} delay={i * 0.03}>
               <Link href={`/markets/${signal.id}`}>
-                <Card className={cn(
-                  "border-border/50 card-hover cursor-pointer",
-                  signal.edge > 0 ? "hover:border-green-500/20" : "hover:border-red-500/20"
+                <div className={cn(
+                  "bg-card p-5 transition-colors hover:bg-muted cursor-pointer block",
                 )}>
-                  <CardContent className="p-5">
-                    <div className="grid gap-4 lg:grid-cols-[1fr_200px_200px] items-center">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant={signal.side === "YES" ? "success" : "destructive"} className="text-xs">
-                            {signal.side === "YES" ? <TrendingUp className="mr-1 h-3 w-3" /> : <TrendingDown className="mr-1 h-3 w-3" />}
-                            {signal.side}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">{signal.market}</Badge>
-                        </div>
-                        <p className="text-sm font-medium leading-relaxed">{signal.question}</p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{signal.reasoning}</p>
+                  <div className="grid gap-4 lg:grid-cols-[1fr_200px_200px] items-center">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant={signal.side === "YES" ? "up" : "down"} className="text-xs">
+                          {signal.side === "YES" ? <TrendingUp className="mr-1 h-3 w-3" /> : <TrendingDown className="mr-1 h-3 w-3" />}
+                          {signal.side}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">{signal.market}</Badge>
                       </div>
+                      <p className="text-sm font-medium leading-relaxed">{signal.question}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{signal.reasoning}</p>
+                    </div>
 
-                      <div className="flex flex-col items-start gap-2">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className={cn("text-lg font-bold", signal.edge > 0 ? "text-green-400" : "text-red-400")}>
-                            {signal.edge > 0 ? "+" : ""}{signal.edge}%
-                          </span>
-                          <span className="text-xs text-muted-foreground">edge</span>
-                        </div>
-                        <div className="w-full">
-                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                            <span>Confidence</span>
-                            <span>{signal.confidence}%</span>
-                          </div>
-                          <Progress value={signal.confidence} className="h-1.5" />
-                        </div>
+                    <div className="flex flex-col items-start gap-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={cn("text-lg font-bold font-mono", signal.edge > 0 ? "text-up" : "text-down")}>
+                          {signal.edge > 0 ? "+" : ""}{signal.edge}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">edge</span>
                       </div>
-
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>AI: <span className="text-primary font-medium">{signal.predictedProb}%</span></span>
-                          <span>Market: <span className="text-foreground font-medium">{signal.marketProb}%</span></span>
+                      <div className="w-full">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>Confidence</span>
+                          <span className="font-mono">{signal.confidence}%</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {signal.timestamp}
-                        </div>
+                        <Progress value={signal.confidence} className="h-1.5" />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>AI: <span className="text-primary font-medium font-mono">{signal.predictedProb}%</span></span>
+                        <span>Market: <span className="text-foreground font-medium font-mono">{signal.marketProb}%</span></span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {signal.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </Link>
             </FadeInView>
           ))}

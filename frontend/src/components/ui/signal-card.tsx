@@ -21,8 +21,8 @@ interface SignalCardProps {
 }
 
 const directionConfig = {
-  buy: { label: "BUY", class: "text-green-400 border-green-400/20 bg-green-400/5" },
-  sell: { label: "SELL", class: "text-red-400 border-red-400/20 bg-red-400/5" },
+  buy: { label: "BUY", class: "text-up border-up/20 bg-up/5" },
+  sell: { label: "SELL", class: "text-down border-down/20 bg-down/5" },
   hold: { label: "HOLD", class: "text-muted-foreground border-border bg-muted/10" },
 } as const
 
@@ -50,15 +50,15 @@ export function SignalCard({
 
   const confidenceColor =
     confidence > 0.7
-      ? "linear-gradient(90deg, #22c55e, #16a34a)"
+      ? "linear-gradient(90deg, #0ecb81, #089961)"
       : confidence > 0.4
-        ? "linear-gradient(90deg, #eab308, #d97706)"
-        : "linear-gradient(90deg, #ef4444, #dc2626)"
+        ? "linear-gradient(90deg, #FCD535, #e6b800)"
+        : "linear-gradient(90deg, #f6465d, #d13e52)"
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-4 glow-card transition-all duration-300",
+        "rounded border border-border bg-card p-4 transition-all duration-300 hover:bg-muted",
         className,
       )}
     >
@@ -76,7 +76,7 @@ export function SignalCard({
         <div className="flex items-center gap-2 shrink-0">
           <span
             className={cn(
-              "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-bold font-mono",
+              "inline-flex items-center rounded border px-2 py-0.5 text-xs font-bold font-mono",
               dir.class,
             )}
           >

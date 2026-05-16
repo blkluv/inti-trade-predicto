@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils"
-import { EDGE_COLORS } from "@/lib/constants"
 
 interface EdgeBadgeProps {
   edge: number
@@ -17,16 +16,16 @@ export function EdgeBadge({ edge, size = "md", className }: EdgeBadgeProps) {
   const isPositive = edge > 0
   const isNeutral = edge === 0
   const colorClass = isNeutral
-    ? EDGE_COLORS.neutral
+    ? "text-muted-foreground"
     : isPositive
-      ? EDGE_COLORS.positive
-      : EDGE_COLORS.negative
+      ? "text-up"
+      : "text-down"
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md font-mono font-semibold",
-        "bg-black/20 border border-current/20",
+        "inline-flex items-center rounded font-mono font-semibold",
+        "bg-card border border-border",
         sizeClasses[size],
         colorClass,
         className,

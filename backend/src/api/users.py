@@ -29,6 +29,14 @@ class UserLogin(BaseModel):
     password: str
 
 
+class SocialLogin(BaseModel):
+    provider: str
+    provider_id: str
+    email: str
+    name: str | None = None
+    avatar_url: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -37,6 +45,8 @@ class TokenResponse(BaseModel):
 class UserProfile(BaseModel):
     id: UUID
     email: str
+    name: str | None
+    avatar_url: str | None
     subscription_tier: str
     signals_used_today: int
     risk_profile: dict
@@ -103,6 +113,8 @@ def _user_to_profile(user: User) -> UserProfile:
     return UserProfile(
         id=user.id,
         email=user.email,
+        name=user.name,
+        avatar_url=user.avatar_url,
         subscription_tier=user.subscription_tier,
         signals_used_today=user.signals_used_today,
         risk_profile=user.risk_profile,
@@ -149,6 +161,49 @@ async def login(body: UserLogin, db: AsyncSession = Depends(get_db)):
     user = result.scalar_one_or_none()
     if not user or not pwd_context.verify(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    token = create_access_token(str(user.id))
+    return TokenResponse(access_token=token)
+
+
+@router.post("/auth/social-login", response_model=TokenResponse)
+async def social_login(body: SocialLogin, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(User).where(
+            User.oauth_provider == body.provider,
+            User.oauth_provider_id == body.provider_id,
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        token = create_access_token(str(user.id))
+        return TokenResponse(access_token=token)
+
+    existing_email = await db.execute(select(User).where(User.email == body.email))
+    email_user = existing_email.scalar_one_or_none()
+    if email_user:
+        email_user.oauth_provider = body.provider
+        email_user.oauth_provider_id = body.provider_id
+        if body.name:
+            email_user.name = body.name
+        if body.avatar_url:
+            email_user.avatar_url = body.avatar_url
+        await db.commit()
+        await db.refresh(email_user)
+        token = create_access_token(str(email_user.id))
+        return TokenResponse(access_token=token)
+
+    user = User(
+        email=body.email,
+        name=body.name,
+        avatar_url=body.avatar_url,
+        oauth_provider=body.provider,
+        oauth_provider_id=body.provider_id,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
 
     token = create_access_token(str(user.id))
     return TokenResponse(access_token=token)

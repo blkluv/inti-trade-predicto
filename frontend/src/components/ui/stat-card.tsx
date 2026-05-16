@@ -27,21 +27,20 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-4 glow-card transition-all duration-300 hover:glow-card",
-        !className?.includes("glow-card") && "hover:shadow-lg",
+        "rounded border border-border bg-card p-4 transition-all duration-300 hover:bg-muted",
         className,
       )}
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary">
+        <div className="flex items-center justify-center w-9 h-9 rounded bg-primary/10 text-primary">
           {icon}
         </div>
         {change !== undefined && (
           <div
             className={cn(
               "flex items-center gap-1 text-xs font-semibold font-mono",
-              isPositive && "text-green-400",
-              isNegative && "text-red-400",
+              isPositive && "text-up",
+              isNegative && "text-down",
               !isPositive && !isNegative && "text-muted-foreground",
             )}
           >

@@ -51,35 +51,35 @@ export function ProbabilityGauge({
   const rotation = (clampedProb - 0.5) * 180
 
   const getColor = (prob: number) => {
-    if (prob > 0.6) return "#22c55e"
-    if (prob > 0.4) return "#eab308"
-    return "#ef4444"
+    if (prob > 0.6) return "#0ecb81"
+    if (prob > 0.4) return "#FCD535"
+    return "#f6465d"
   }
 
   return (
     <div className={cn("relative inline-flex flex-col items-center", className)}>
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <defs>
-          <linearGradient id={`gg-${size}`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="50%" stopColor="#eab308" />
-            <stop offset="100%" stopColor="#22c55e" />
+          <linearGradient id={`bg-gauge-${size}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#f6465d" />
+            <stop offset="50%" stopColor="#FCD535" />
+            <stop offset="100%" stopColor="#0ecb81" />
           </linearGradient>
         </defs>
 
         <path
           d={fullArc}
           fill="none"
-          stroke={`url(#gg-${size})`}
+          stroke={`url(#bg-gauge-${size})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          opacity={0.15}
+          opacity={0.12}
         />
 
         <motion.path
           d={fullArc}
           fill="none"
-          stroke={`url(#gg-${size})`}
+          stroke={`url(#bg-gauge-${size})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
@@ -105,12 +105,12 @@ export function ProbabilityGauge({
         </motion.g>
 
         <circle cx={cx} cy={cy} r={4} fill={getColor(clampedProb)} />
-        <circle cx={cx} cy={cy} r={1.5} fill="hsl(240 10% 4%)" />
+        <circle cx={cx} cy={cy} r={1.5} fill="#0b0e11" />
       </svg>
 
       {showLabel && (
         <span
-          className="font-bold font-mono"
+          className="font-bold font-mono tracking-tight"
           style={{
             color: getColor(clampedProb),
             fontSize: labelSize,

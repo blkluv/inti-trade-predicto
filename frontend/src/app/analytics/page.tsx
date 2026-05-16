@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
             { label: "Avg Edge", value: "+4.8%", desc: "Per signal", icon: Brain },
           ].map((item, i) => (
             <FadeInView key={item.label} delay={i * 0.05}>
-              <Card className="border-border/50 card-hover">
+              <Card className="border-border/50">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</span>
@@ -111,15 +111,15 @@ export default function AnalyticsPage() {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={accuracyData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                          <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} domain={[85, 100]} tickFormatter={(v) => `${v}%`} />
-                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#2b3139" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} />
+                          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} domain={[85, 100]} tickFormatter={(v) => `${v}%`} />
+                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} />
                           <Tooltip
-                            contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
+                            contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "12px" }}
                           />
-                          <Bar yAxisId="right" dataKey="signals" fill="rgba(245,158,11,0.15)" name="Signals" />
-                          <Line yAxisId="left" type="monotone" dataKey="accuracy" stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: "#f59e0b", r: 4 }} name="Accuracy %" />
+                          <Bar yAxisId="right" dataKey="signals" fill="rgba(252,213,53,0.15)" name="Signals" />
+                          <Line yAxisId="left" type="monotone" dataKey="accuracy" stroke="#FCD535" strokeWidth={2.5} dot={{ fill: "#FCD535", r: 4 }} name="Accuracy %" />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
@@ -139,21 +139,21 @@ export default function AnalyticsPage() {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <ScatterChart>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                          <XAxis dataKey="predicted" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                          <YAxis dataKey="actual" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#2b3139" />
+                          <XAxis dataKey="predicted" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                          <YAxis dataKey="actual" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
                           <Tooltip
-                            contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
+                            contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "12px" }}
                             formatter={(value) => `${value}%`}
                           />
-                          <Scatter data={calibrationData} fill="#f59e0b" name="Actual" line={{ stroke: "#f59e0b", strokeWidth: 1 }} shape="circle" />
-                          <Line data={calibrationData} dataKey="perfect" stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" name="Perfect" dot={false} />
+                          <Scatter data={calibrationData} fill="#FCD535" name="Actual" line={{ stroke: "#FCD535", strokeWidth: 1 }} shape="circle" />
+                          <Line data={calibrationData} dataKey="perfect" stroke="#2b3139" strokeDasharray="5 5" name="Perfect" dot={false} />
                         </ScatterChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="flex items-center justify-center gap-6 mt-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-amber-500 rounded" />Actual</span>
-                      <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-white/20 rounded" />Perfect</span>
+                      <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-primary rounded" />Actual</span>
+                      <span className="flex items-center gap-2"><span className="h-0.5 w-4 bg-border rounded" />Perfect</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
                                   "font-medium",
                                   model.name === "Ensemble" && "text-primary"
                                 )}>{model.name}</span>
-                                {model.name === "Ensemble" && <Badge variant="edge" className="text-xs">Best</Badge>}
+                                {model.name === "Ensemble" && <Badge variant="yellow" className="text-xs">Best</Badge>}
                               </div>
                             </td>
                             <td className="py-3 px-3 text-right tabular-nums">{model.accuracy}%</td>
@@ -234,9 +234,9 @@ export default function AnalyticsPage() {
                           {backtestResults.map((bt) => (
                             <tr key={bt.strategy} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                               <td className="py-3 px-2 font-medium">{bt.strategy}</td>
-                              <td className="py-3 px-2 text-right text-green-400 font-medium tabular-nums">+{bt.return}%</td>
+                              <td className="py-3 px-2 text-right text-up font-medium tabular-nums">+{bt.return}%</td>
                               <td className="py-3 px-2 text-right tabular-nums">{bt.sharpe}</td>
-                              <td className="py-3 px-2 text-right text-red-400 tabular-nums">{bt.maxDD}%</td>
+                              <td className="py-3 px-2 text-right text-down tabular-nums">{bt.maxDD}%</td>
                               <td className="py-3 px-2 text-right tabular-nums">{bt.trades}</td>
                             </tr>
                           ))}
@@ -269,14 +269,14 @@ export default function AnalyticsPage() {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={backtestResults} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                          <XAxis type="number" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                          <YAxis type="category" dataKey="strategy" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} width={120} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#2b3139" />
+                          <XAxis type="number" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                          <YAxis type="category" dataKey="strategy" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} width={120} />
                           <Tooltip
-                            contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
+                            contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "12px" }}
                             formatter={(value) => [`${value}%`, "Return"]}
                           />
-                          <Bar dataKey="return" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20} />
+                          <Bar dataKey="return" fill="#FCD535" radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

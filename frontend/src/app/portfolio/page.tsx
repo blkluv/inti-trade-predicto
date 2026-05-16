@@ -31,11 +31,11 @@ const positions = [
 ]
 
 const allocationData = [
-  { name: "Crypto", value: 42, color: "#f59e0b" },
-  { name: "Economics", value: 28, color: "#16a34a" },
+  { name: "Crypto", value: 42, color: "#FCD535" },
+  { name: "Economics", value: 28, color: "#0ecb81" },
   { name: "Politics", value: 15, color: "#3b82f6" },
   { name: "Sports", value: 10, color: "#8b5cf6" },
-  { name: "Science", value: 5, color: "#ec4899" },
+  { name: "Science", value: 5, color: "#f6465d" },
 ]
 
 const pnlHistory = [
@@ -72,14 +72,14 @@ export default function PortfolioPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           {summaryCards.map((item, i) => (
             <FadeInView key={item.label} delay={i * 0.05}>
-              <Card className="border-border/50 card-hover">
+              <Card className="border-border/50">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</span>
                     <item.icon className="h-4 w-4 text-primary/60" />
                   </div>
                   <div className="text-2xl font-bold">{item.value}</div>
-                  <div className={cn("flex items-center gap-1 text-xs mt-1", item.positive ? "text-green-400" : "text-red-400")}>
+                    <div className={cn("flex items-center gap-1 text-xs mt-1", item.positive ? "text-up" : "text-down")}>
                     {item.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                     {item.change}
                   </div>
@@ -117,12 +117,12 @@ export default function PortfolioPage() {
                           <tr key={i} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                             <td className="py-3 px-2 font-medium truncate max-w-[200px]">{pos.market}</td>
                             <td className="py-3 px-2 text-right">
-                              <Badge variant={pos.side === "YES" ? "success" : "destructive"} className="text-xs">{pos.side}</Badge>
+                              <Badge variant={pos.side === "YES" ? "up" : "down"} className="text-xs">{pos.side}</Badge>
                             </td>
                             <td className="py-3 px-2 text-right tabular-nums">{pos.size}</td>
                             <td className="py-3 px-2 text-right tabular-nums">{pos.entry.toFixed(2)}</td>
                             <td className="py-3 px-2 text-right tabular-nums">{pos.current.toFixed(2)}</td>
-                            <td className={cn("py-3 px-2 text-right font-medium tabular-nums", pos.pnlPct >= 0 ? "text-green-400" : "text-red-400")}>
+                            <td className={cn("py-3 px-2 text-right font-medium tabular-nums", pos.pnlPct >= 0 ? "text-up" : "text-down")}>
                               {pos.pnl}
                             </td>
                           </tr>
@@ -162,7 +162,7 @@ export default function PortfolioPage() {
                           ))}
                         </Pie>
                         <Tooltip
-                          contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
+                          contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "12px" }}
                           formatter={(value, name) => [`${value}%`, name]}
                         />
                       </PieChart>
@@ -195,7 +195,7 @@ export default function PortfolioPage() {
                       <span className="text-muted-foreground">{metric.label}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{metric.value}</span>
-                        <span className={cn("h-2 w-2 rounded-full", metric.status === "good" ? "bg-green-500" : "bg-amber-500")} />
+                        <span className={cn("h-2 w-2 rounded-full", metric.status === "good" ? "bg-up" : "bg-primary")} />
                       </div>
                     </div>
                   ))}
@@ -217,14 +217,14 @@ export default function PortfolioPage() {
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={pnlHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 12, fill: "#888" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2b3139" />
+                    <XAxis dataKey="week" tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill: "#848e9c" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                     <Tooltip
-                      contentStyle={{ background: "#13131f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
+                      contentStyle={{ background: "#1e2329", border: "1px solid #2b3139", borderRadius: "4px", fontSize: "12px" }}
                       formatter={(value) => [`${value}%`, "PnL"]}
                     />
-                    <Line type="monotone" dataKey="pnl" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 4 }} />
+                    <Line type="monotone" dataKey="pnl" stroke="#FCD535" strokeWidth={2} dot={{ fill: "#FCD535", r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

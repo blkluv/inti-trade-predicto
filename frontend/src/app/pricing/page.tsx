@@ -47,45 +47,22 @@ const tiers = [
       { name: "API access", value: true, free: false, pro: true, enterprise: true },
       { name: "Kelly sizing calculator", value: true, free: false, pro: true, enterprise: true },
       { name: "Priority support", value: true, free: false, pro: true, enterprise: true },
-      { name: "Custom models", value: false, free: false, pro: false, enterprise: true },
-      { name: "Dedicated infrastructure", value: false, free: false, pro: false, enterprise: true },
-      { name: "White-label options", value: false, free: false, pro: false, enterprise: true },
-      { name: "SLA guarantee", value: false, free: false, pro: false, enterprise: true },
-      { name: "Team accounts", value: false, free: false, pro: false, enterprise: true },
+      { name: "Custom models", value: true, free: false, pro: true, enterprise: true },
+      { name: "Dedicated infrastructure", value: true, free: false, pro: true, enterprise: true },
+      { name: "White-label options", value: true, free: false, pro: true, enterprise: true },
+      { name: "SLA guarantee", value: true, free: false, pro: true, enterprise: true },
+      { name: "Team accounts", value: true, free: false, pro: true, enterprise: true },
     ],
     cta: "Start Pro",
     highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "$249",
-    desc: "For institutions",
-    features: [
-      { name: "Signals per day", value: "Unlimited", free: false, pro: true, enterprise: true },
-      { name: "Signal delay", value: "Real-time", free: false, pro: true, enterprise: true },
-      { name: "Basic metrics", value: true, free: true, pro: true, enterprise: true },
-      { name: "Email alerts", value: true, free: true, pro: true, enterprise: true },
-      { name: "Real-time delivery", value: true, free: false, pro: true, enterprise: true },
-      { name: "Full reasoning traces", value: true, free: false, pro: true, enterprise: true },
-      { name: "API access", value: true, free: false, pro: true, enterprise: true },
-      { name: "Kelly sizing calculator", value: true, free: false, pro: true, enterprise: true },
-      { name: "Priority support", value: true, free: false, pro: true, enterprise: true },
-      { name: "Custom models", value: true, free: false, pro: false, enterprise: true },
-      { name: "Dedicated infrastructure", value: true, free: false, pro: false, enterprise: true },
-      { name: "White-label options", value: true, free: false, pro: false, enterprise: true },
-      { name: "SLA guarantee", value: true, free: false, pro: false, enterprise: true },
-      { name: "Team accounts", value: true, free: false, pro: false, enterprise: true },
-    ],
-    cta: "Contact Sales",
-    highlighted: false,
   },
 ]
 
 const faqs = [
   { q: "Can I upgrade from Free to Pro anytime?", a: "Yes. Upgrade instantly from your dashboard. All your data and settings carry over." },
   { q: "Do you offer refunds?", a: "Pro plans come with a 14-day money-back guarantee. No questions asked." },
-  { q: "Can I use the API for commercial purposes?", a: "Yes, Pro and Enterprise plans include commercial API usage rights." },
-  { q: "What payment methods do you accept?", a: "We accept all major credit cards, crypto (USDC), and wire transfers for Enterprise." },
+  { q: "Can I use the API for commercial purposes?", a: "Yes, the Pro plan includes commercial API usage rights." },
+  { q: "What payment methods do you accept?", a: "We accept all major credit cards and crypto (USDC)." },
 ]
 
 export default function PricingPage() {
@@ -100,10 +77,10 @@ export default function PricingPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <Badge variant="edge" className="mb-4 px-4 py-1.5 text-sm">
-            <Zap className="mr-1.5 h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-primary/20 bg-primary/10 text-primary mb-4">
+            <Zap className="h-3.5 w-3.5" />
             Simple Pricing
-          </Badge>
+          </span>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             Choose your plan
           </h1>
@@ -133,16 +110,16 @@ export default function PricingPage() {
           </div>
         </motion.div>
 
-        <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto mb-20">
+        <div className="grid gap-8 lg:grid-cols-2 max-w-4xl mx-auto mb-20">
           {tiers.map((tier, i) => (
             <FadeInView key={tier.name} delay={i * 0.1}>
               <Card className={cn(
-                "relative border-border/50 card-hover",
-                tier.highlighted && "border-primary/30 glow-amber"
+                "relative border-border/50",
+                tier.highlighted && "border-primary/30"
               )}>
                 {tier.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="edge" className="px-3 py-1">RECOMMENDED</Badge>
+                    <Badge variant="yellow" className="px-3 py-1">RECOMMENDED</Badge>
                   </div>
                 )}
                 <CardContent className="p-6 pt-8">
@@ -213,9 +190,9 @@ export default function PricingPage() {
             <Card className="border-border/50 mt-8 bg-primary/5 border-primary/20">
               <CardContent className="p-6 text-center">
                 <Headphones className="h-6 w-6 text-primary mx-auto mb-3" />
-                <h3 className="font-semibold">Need a custom plan?</h3>
-                <p className="text-sm text-muted-foreground mt-1">Contact our sales team for custom pricing and enterprise needs.</p>
-                <Button variant="outline" className="mt-4">Contact Sales</Button>
+                <h3 className="font-semibold">Have more questions?</h3>
+                <p className="text-sm text-muted-foreground mt-1">Contact our support team for any other queries.</p>
+                <Button variant="outline" className="mt-4">Contact Support</Button>
               </CardContent>
             </Card>
           </FadeInView>
