@@ -1,8 +1,7 @@
 import json
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
@@ -24,11 +23,32 @@ def _normalize_database_url(url: str) -> str:
     return url
 
 
+def _parse_cors_origins(raw: str | None) -> list[str]:
+    if raw is None:
+        return DEFAULT_CORS_ORIGINS
+    raw = raw.strip()
+    if not raw:
+        return DEFAULT_CORS_ORIGINS
+    origins: list[str] = []
+    if raw.startswith("["):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                origins = [str(o).strip() for o in parsed if str(o).strip()]
+        except json.JSONDecodeError:
+            origins = []
+    if not origins:
+        origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+    if "*" in origins:
+        return ["*"]
+    return origins or DEFAULT_CORS_ORIGINS
+
+
 class Settings(BaseSettings):
     DATABASE_URL: str = _normalize_database_url(
         os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost:5432/inti")
     )
-    CORS_ORIGINS: list[str] = DEFAULT_CORS_ORIGINS
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
     NVIDIA_API_URL: str = "https://integrate.api.nvidia.com/v1"
@@ -51,34 +71,9 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def _parse_cors_origins(cls, value):
-        if value is None:
-            return DEFAULT_CORS_ORIGINS
-        if isinstance(value, str):
-            raw = value.strip()
-            if not raw:
-                return DEFAULT_CORS_ORIGINS
-            if raw.startswith("["):
-                try:
-                    parsed = json.loads(raw)
-                    if isinstance(parsed, list):
-                        value = parsed
-                    else:
-                        return DEFAULT_CORS_ORIGINS
-                except json.JSONDecodeError:
-                    pass
-            if isinstance(value, str):
-                origins = [origin.strip() for origin in value.split(",") if origin.strip()]
-                if "*" in origins:
-                    return ["*"]
-                return origins or DEFAULT_CORS_ORIGINS
-        if isinstance(value, list):
-            if "*" in value:
-                return ["*"]
-            return value
-        return DEFAULT_CORS_ORIGINS
+    @property
+    def cors_origins(self) -> list[str]:
+        return _parse_cors_origins(self.CORS_ORIGINS)
 
 
 settings = Settings()
