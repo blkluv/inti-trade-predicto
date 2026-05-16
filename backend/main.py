@@ -9,7 +9,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from src.core.config import settings
-from src.core.database import engine, async_session
+from src.core.database import engine, async_session, Base
 from src.api.users import router as users_router
 from src.api.markets import router as markets_router
 from src.api.signals import router as signals_router
@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI):
     global _polymarket_provider, _data_agent, _agent_task, _seed_task
 
     _polymarket_provider = PolymarketProvider()
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     _data_agent = DataAgent(
         async_session,

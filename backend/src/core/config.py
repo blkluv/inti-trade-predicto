@@ -26,6 +26,8 @@ def _parse_cors_origins(raw: str | None) -> list[str]:
     if not raw:
         return DEFAULT_CORS_ORIGINS
     origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+    if "*" in origins:
+        return ["*"]
     return origins or DEFAULT_CORS_ORIGINS
 
 
