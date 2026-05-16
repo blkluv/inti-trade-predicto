@@ -1,6 +1,7 @@
 import json
 import os
 from dotenv import load_dotenv
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 load_dotenv()
@@ -70,6 +71,13 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def _normalize_db_url(cls, value: str | None):
+        if isinstance(value, str):
+            return _normalize_database_url(value)
+        return value
 
     @property
     def cors_origins(self) -> list[str]:
