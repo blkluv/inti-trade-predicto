@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
-import httpx
 from sqlalchemy import select
 
 from src.agents.base_agent import BaseAgent
@@ -96,6 +95,13 @@ class DataAgent(BaseAgent):
 
     async def collect_news(self, markets: list[dict]) -> list[dict]:
         results = []
+        api_key = self.providers.get("newsapi_key", "")
+        if not api_key:
+            logger.warning("News API key missing; skipping news collection")
+            return results
+
+        import httpx
+
         async with httpx.AsyncClient(timeout=30) as client:
             for market in markets:
                 query = market["question"]
@@ -108,9 +114,7 @@ class DataAgent(BaseAgent):
                             "pageSize": 5,
                             "sortBy": "publishedAt",
                         },
-                        headers={
-                            "X-Api-Key": self.providers.get("newsapi_key", "")
-                        },
+                        headers={"X-Api-Key": api_key},
                     )
                     if resp.status_code == 200:
                         articles = resp.json().get("articles", [])

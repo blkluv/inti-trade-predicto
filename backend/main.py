@@ -30,7 +30,7 @@ _seed_task: asyncio.Task | None = None
 
 async def _seed_markets(agent: DataAgent):
     try:
-        logger.info("Seeding initial market data from PredScope…")
+        logger.info("Seeding initial market data from Polymarket…")
         markets = await agent.collect_market_data()
         logger.info("Seeded %d markets on startup", len(markets))
     except Exception as e:
@@ -48,7 +48,10 @@ async def lifespan(app: FastAPI):
 
     _data_agent = DataAgent(
         async_session,
-        {"polymarket": _polymarket_provider, "newsapi_key": ""},
+        {
+            "polymarket": _polymarket_provider,
+            "newsapi_key": settings.NEWS_API_KEY,
+        },
     )
 
     _seed_task = asyncio.create_task(_seed_markets(_data_agent))

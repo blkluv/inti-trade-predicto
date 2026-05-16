@@ -54,14 +54,9 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
     NVIDIA_API_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_MODEL: str = "minimaxai/minimax-m2.7"
-    ARC_RPC_URL: str = os.getenv("ARC_RPC_URL", "https://rpc.testnet.arc.network")
-    ARX_PRIVATE_KEY: str = os.getenv("ARX_PRIVATE_KEY", "")
-    SUBSCRIPTION_MANAGER_ADDRESS: str = os.getenv("SUBSCRIPTION_MANAGER_ADDRESS", "0xFf902bF42e2F1B2cB40a33F64758949Ddb7a6584")
-    SIGNAL_ATTESTATION_ADDRESS: str = os.getenv("SIGNAL_ATTESTATION_ADDRESS", "0xa342cEABFc9f3eB4ce35de08cd954b8b97886A29")
-    USDC_ADDRESS: str = os.getenv("USDC_ADDRESS", "0x3600000000000000000000000000000000000000")
+    NEWS_API_KEY: str = os.getenv("NEWS_API_KEY", "")
     POLYMARKET_API_URL: str = os.getenv("POLYMARKET_API_URL", "https://clob.polymarket.com")
     POLYMARKET_GAMMA_API: str = "https://gamma-api.polymarket.com"
-    PREDSCOPE_API_URL: str = os.getenv("PREDSCOPE_API_URL", "https://predscope.com/api")
     HTTP_PROXY: str = os.getenv("HTTP_PROXY", "")
     POLL_INTERVAL_SECONDS: int = int(os.getenv("POLL_INTERVAL_SECONDS", "300"))
     SIGNAL_FEE_BPS: int = 50
