@@ -1,14 +1,12 @@
 "use client"
 
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function LoginPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
   const handleSocialLogin = async (provider: string) => {
@@ -18,29 +16,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm space-y-6"
-      >
+    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+      <motion.div initial={{ opacity: 0, y: 10 }} className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <TrendingUp className="h-6 w-6 text-primary" />
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <TrendingUp className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Sign in to Inti TP</h1>
-          <p className="text-sm text-muted-foreground">
-            Connect your account to get started
-          </p>
+          <h1 className="text-xl font-bold">Sign in to Inti Trade</h1>
+          <p className="text-sm text-muted-foreground">Connect your account to get started</p>
         </div>
-
         <div className="space-y-3">
-          <Button
-            onClick={() => handleSocialLogin("github")}
-            disabled={loading !== null}
-            className="w-full h-11 gap-3"
-            variant="outline"
-          >
+          <Button onClick={() => handleSocialLogin("github")} disabled={loading !== null} className="w-full h-11 gap-3" variant="outline">
             {loading === "github" ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
@@ -50,13 +36,7 @@ export default function LoginPage() {
             )}
             Continue with GitHub
           </Button>
-
-          <Button
-            onClick={() => handleSocialLogin("google")}
-            disabled={loading !== null}
-            className="w-full h-11 gap-3"
-            variant="outline"
-          >
+          <Button onClick={() => handleSocialLogin("google")} disabled={loading !== null} className="w-full h-11 gap-3" variant="outline">
             {loading === "google" ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
@@ -70,7 +50,6 @@ export default function LoginPage() {
             Continue with Google
           </Button>
         </div>
-
         <p className="text-center text-xs text-muted-foreground">
           By signing in, you agree to our Terms of Service and Privacy Policy.
         </p>

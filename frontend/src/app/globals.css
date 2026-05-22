@@ -41,18 +41,18 @@
 }
 
 :root {
-  --background: 220 15% 5%;
-  --foreground: 210 6% 87%;
-  --card: 216 20% 14%;
-  --card-foreground: 210 6% 87%;
-  --popover: 214 16% 20%;
-  --popover-foreground: 210 6% 87%;
+  --background: 220 12% 5%;
+  --foreground: 0 0% 95%;
+  --card: 216 14% 10%;
+  --card-foreground: 0 0% 95%;
+  --popover: 216 14% 12%;
+  --popover-foreground: 0 0% 95%;
   --primary: 45 97% 60%;
   --primary-foreground: 220 15% 5%;
-  --secondary: 216 20% 14%;
-  --secondary-foreground: 210 6% 87%;
-  --muted: 216 15% 16%;
-  --muted-foreground: 216 10% 56%;
+  --secondary: 216 14% 10%;
+  --secondary-foreground: 0 0% 95%;
+  --muted: 216 10% 14%;
+  --muted-foreground: 216 8% 50%;
   --accent: 45 97% 60%;
   --accent-foreground: 220 15% 5%;
   --destructive: 352 91% 62%;
@@ -65,10 +65,10 @@
   --light-foreground: 216 20% 14%;
   --light-muted: 216 10% 56%;
   --light-border: 0 0% 90%;
-  --border: 214 16% 20%;
-  --input: 214 16% 20%;
+  --border: 216 10% 16%;
+  --input: 216 10% 16%;
   --ring: 45 97% 60%;
-  --radius: 0.25rem;
+  --radius: 0.5rem;
 }
 
 @layer base {
@@ -85,24 +85,6 @@
 
 .font-number {
   font-feature-settings: "tnum" 1;
-}
-
-@keyframes price-up {
-  0% { color: hsl(var(--up)); }
-  100% { color: inherit; }
-}
-
-@keyframes price-down {
-  0% { color: hsl(var(--down)); }
-  100% { color: inherit; }
-}
-
-.flash-up {
-  animation: price-up 1.5s ease-out;
-}
-
-.flash-down {
-  animation: price-down 1.5s ease-out;
 }
 
 @keyframes pulse-dot {
@@ -123,3 +105,15 @@
 .stagger-2 { animation: slide-up-fade 0.4s ease-out 0.2s both; }
 .stagger-3 { animation: slide-up-fade 0.4s ease-out 0.3s both; }
 .stagger-4 { animation: slide-up-fade 0.4s ease-out 0.4s both; }
+
+.pm-card {
+  @apply rounded-lg border border-border bg-card transition-colors hover:border-muted-foreground/30;
+}
+
+.pm-card-content {
+  @apply p-4;
+}
+
+.pm-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, transparent 50%);
+}
