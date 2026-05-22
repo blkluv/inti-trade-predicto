@@ -150,46 +150,46 @@ class DataAgent(BaseAgent):
             logger.warning("News API key missing; skipping news collection")
             return results
 
-                import httpx
+        import httpx
 
-                async with httpx.AsyncClient(timeout=30) as client:
-                    for market in markets:
-                        query = market["question"]
-                        try:
-                            resp = await client.get(
-                                "https://newsapi.org/v2/everything",
-                                params={
-                                    "q": query,
-                                    "language": "en",
-                                    "pageSize": 3,
-                                    "sortBy": "publishedAt",
-                                },
-                                headers={"X-Api-Key": api_key},
+        async with httpx.AsyncClient(timeout=30) as client:
+            for market in markets:
+                query = market["question"]
+                try:
+                    resp = await client.get(
+                        "https://newsapi.org/v2/everything",
+                        params={
+                            "q": query,
+                            "language": "en",
+                            "pageSize": 3,
+                            "sortBy": "publishedAt",
+                        },
+                        headers={"X-Api-Key": api_key},
+                    )
+                    if resp.status_code in (426, 429):
+                        logger.warning("NewsAPI rate limited, skipping remaining")
+                        break
+                    if resp.status_code == 200:
+                        articles = resp.json().get("articles", [])
+                        for a in articles:
+                            results.append(
+                                {
+                                    "market_id": market["id"],
+                                    "title": a.get("title", ""),
+                                    "description": a.get("description", ""),
+                                    "url": a.get("url", ""),
+                                    "published_at": a.get("publishedAt", ""),
+                                    "source": a.get("source", {}).get(
+                                        "name", "unknown"
+                                    ),
+                                }
                             )
-                            if resp.status_code in (426, 429):
-                                logger.warning("NewsAPI rate limited, skipping remaining")
-                                break
-                            if resp.status_code == 200:
-                                articles = resp.json().get("articles", [])
-                                for a in articles:
-                                    results.append(
-                                        {
-                                            "market_id": market["id"],
-                                            "title": a.get("title", ""),
-                                            "description": a.get("description", ""),
-                                            "url": a.get("url", ""),
-                                            "published_at": a.get("publishedAt", ""),
-                                            "source": a.get("source", {}).get(
-                                                "name", "unknown"
-                                            ),
-                                        }
-                                    )
-                        except httpx.HTTPError as e:
-                            logger.warning(
-                                "News fetch failed for %s: %s", market["id"], e
-                            )
+                except httpx.HTTPError as e:
+                    logger.warning(
+                        "News fetch failed for %s: %s", market["id"], e
+                    )
 
-                        await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3)
 
         logger.info("Collected %d news articles for %d markets", len(results), len(markets))
         return results
