@@ -120,12 +120,12 @@ class ExecutionAgent(BaseAgent):
                 return {"status": "check_failed", "error": str(e)}
 
     async def run(self) -> None:
-        conn = await self.listen("execution_agent")
+        queue = await self.listen("execution_agent")
 
         while self._running:
             try:
-                notification = await conn.notifies.get()
-                payload = json.loads(notification.payload)
+                payload_raw = await queue.get()
+                payload = json.loads(payload_raw)
                 signal_id = payload.get("signal_id")
 
                 if not signal_id:

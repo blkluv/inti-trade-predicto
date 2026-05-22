@@ -59,12 +59,12 @@ class SignalAgent(BaseAgent):
             return list(result.scalars().all())
 
     async def run(self) -> None:
-        conn = await self.listen("signal_agent")
+        queue = await self.listen("signal_agent")
 
         while self._running:
             try:
-                notification = await conn.notifies.get()
-                payload = json.loads(notification.payload)
+                payload_raw = await queue.get()
+                payload = json.loads(payload_raw)
                 market = payload.get("market", {})
                 analysis = payload.get("analysis", {})
 

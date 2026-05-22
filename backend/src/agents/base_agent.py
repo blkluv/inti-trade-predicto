@@ -34,14 +34,19 @@ class BaseAgent:
             await conn.execute("SELECT pg_notify($1, $2)", channel, msg)
         logger.debug("Notified %s: %s", channel, msg[:200])
 
-    async def listen(self, channel: str) -> asyncpg.Connection:
+    async def listen(self, channel: str) -> asyncio.Queue:
         from src.core.config import settings
 
         dsn = settings.DATABASE_URL.replace("+asyncpg", "")
         conn = await asyncpg.connect(dsn)
-        await conn.execute(f"LISTEN {channel}")
+        queue: asyncio.Queue = asyncio.Queue()
+
+        async def _handler(pid: int, ch: str, payload: str) -> None:
+            await queue.put(payload)
+
+        await conn.add_listener(channel, _handler)
         self._listener_conn = conn
-        return conn
+        return queue
 
     async def run(self) -> None:
         raise NotImplementedError

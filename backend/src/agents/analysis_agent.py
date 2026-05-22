@@ -115,12 +115,12 @@ class AnalysisAgent(BaseAgent):
             }
 
     async def run(self) -> None:
-        conn = await self.listen("analysis_agent")
+        queue = await self.listen("analysis_agent")
 
         while self._running:
             try:
-                notification = await conn.notifies.get()
-                payload = json.loads(notification.payload)
+                payload_raw = await queue.get()
+                payload = json.loads(payload_raw)
                 markets = payload.get("markets", [])
                 articles = payload.get("articles", [])
                 sentiment_map = payload.get("sentiment", {})
