@@ -1,9 +1,11 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { api } from "@/lib/api"
+import { PolymarketBadge } from "@/components/polymarket-badge"
 import {
   TrendingUp, Shield, BarChart3, Brain, Zap, Globe, Target,
   ChevronRight, ArrowUpRight, Activity, Layers, Check, Sparkles,
@@ -87,35 +89,87 @@ const stats = [
 ]
 
 const steps = [
-  { icon: Globe, title: "Connect Markets", desc: "Seamlessly connect to Polymarket, Kalshi, and other prediction platforms via our unified API.", number: "01" },
+  { icon: Globe, title: "Connect Polymarket", desc: "Realtime Polymarket data streams directly into your dashboard with US-based routing.", number: "01" },
   { icon: Brain, title: "AI Analysis", desc: "Our ensemble of LLMs analyzes news, on-chain data, and market sentiment in real-time.", number: "02" },
   { icon: Zap, title: "Smart Signals", desc: "Get actionable trade signals with edge calculations, Kelly sizing, and full reasoning traces.", number: "03" },
 ]
 
 const features = [
-  { icon: BarChart3, title: "Real-time Intelligence", desc: "Live signal generation with millisecond latency across all supported markets." },
-  { icon: Globe, title: "Multi-market Coverage", desc: "Polymarket, Kalshi, PredictIt, and more in one unified dashboard." },
+  { icon: BarChart3, title: "Real-time Intelligence", desc: "Live signal generation with minute-level refresh from Polymarket." },
+  { icon: Globe, title: "Polymarket Coverage", desc: "All markets, one unified Polymarket-native dashboard." },
   { icon: Target, title: "Smart Position Sizing", desc: "Kelly criterion-based sizing with configurable risk parameters and drawdown protection." },
   { icon: Layers, title: "Full Reasoning Traces", desc: "Every signal includes the complete AI reasoning chain. Audit every prediction." },
 ]
 
-const topMarkets = [
-  { question: "Will BTC exceed $150k by Q3 2026?", yes: 62, volume: "$2.4M", change: "+8.3%" },
-  { question: "Will the Fed cut rates in June 2026?", yes: 45, volume: "$1.8M", change: "+5.1%" },
-  { question: "Will AI regulation pass in 2026?", yes: 38, volume: "$890K", change: "-2.4%" },
-  { question: "Will Super Bowl LX MVP be a QB?", yes: 78, volume: "$520K", change: "+1.2%" },
-]
+type MarketItem = {
+  id: string
+  question: string
+  current_odds: number | null
+  volume_24h: number
+  liquidity: number
+}
+
+type MarketResponse = {
+  items: MarketItem[]
+}
+
+type TopMarket = {
+  question: string
+  yes: number
+  volume: string
+  liquidity: string
+}
+
+const fallbackTopMarkets: TopMarket[] = Array.from({ length: 4 }, () => ({
+  question: "Loading live markets from Polymarket...",
+  yes: 0,
+  volume: "--",
+  liquidity: "--",
+}))
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value)
+}
 
 const faqItems = [
-  { q: "What is Inti Trade Predicto?", a: "Inti Trade Predicto is an AI-powered prediction market intelligence platform that aggregates signals from multiple markets and provides actionable trading insights with full reasoning transparency." },
+  { q: "What is Inti Trade Predicto?", a: "Inti Trade Predicto is an AI-powered prediction market intelligence platform focused on Polymarket, providing actionable trading insights with full reasoning transparency." },
   { q: "How accurate are the signals?", a: "Our ensemble AI system maintains a 94.2% accuracy rate on a 30-day rolling average. We use multiple LLMs cross-validating each other to reduce bias and improve prediction quality." },
-  { q: "Which markets do you support?", a: "We currently support Polymarket, Kalshi, PredictIt, and more. Our unified API lets you access all markets from a single dashboard." },
+  { q: "Which markets do you support?", a: "We currently support Polymarket markets only, delivered in real time via our US-based backend." },
   { q: "Is there a free tier?", a: "Yes! Our Free tier gives you 5 signals per day with 24-hour delay and basic metrics. Upgrade to Pro for unlimited real-time signals with full reasoning traces." },
   { q: "Can I build on top of your API?", a: "Pro and Enterprise tiers include API access. Enterprise customers also get custom models, dedicated infrastructure, and white-label options." },
 ]
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [topMarkets, setTopMarkets] = useState<TopMarket[]>(fallbackTopMarkets)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  useEffect(() => {
+    const fetchTopMarkets = async () => {
+      try {
+        const data = await api.getMarkets({ page: "1", page_size: "4" }) as MarketResponse
+        const mapped = data.items.map((market) => ({
+          question: market.question,
+          yes: Math.round((market.current_odds ?? 0) * 100),
+          volume: formatCurrency(market.volume_24h),
+          liquidity: formatCurrency(market.liquidity),
+        }))
+        setTopMarkets(mapped.length ? mapped : fallbackTopMarkets)
+        setLastUpdated(new Date())
+      } catch (err) {
+        setTopMarkets(fallbackTopMarkets)
+      }
+    }
+
+    fetchTopMarkets()
+    const interval = setInterval(fetchTopMarkets, 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="flex flex-col">
@@ -226,31 +280,32 @@ export default function Home() {
       {/* MARKETS TABLE CARD */}
       <section className="border-b border-border py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeInSection className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Trending Markets</h2>
-              <p className="mt-1 text-muted-foreground">Top prediction markets by volume</p>
-            </div>
-            <Link
-              href="/markets"
-              className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-            >
+           <FadeInSection className="flex flex-wrap items-center justify-between gap-4 mb-6">
+             <div>
+               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Trending Markets</h2>
+               <p className="mt-1 text-muted-foreground">Top prediction markets by volume</p>
+             </div>
+             <PolymarketBadge lastUpdated={lastUpdated} />
+             <Link
+               href="/markets"
+               className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+             >
               View All <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </FadeInSection>
 
           <FadeInSection delay={0.1}>
             <div className="rounded-lg border border-border overflow-hidden">
-              <div className="hidden sm:grid sm:grid-cols-[1fr_120px_120px_100px] gap-4 px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-card border-b border-border">
-                <span>Market</span>
-                <span className="text-right">Yes %</span>
-                <span className="text-right">Volume</span>
-                <span className="text-right">24h</span>
-              </div>
-              {topMarkets.map((market, i) => (
-                <Link
-                  key={market.question}
-                  href="/markets"
+               <div className="hidden sm:grid sm:grid-cols-[1fr_120px_120px_100px] gap-4 px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-card border-b border-border">
+                 <span>Market</span>
+                 <span className="text-right">Yes %</span>
+                 <span className="text-right">Volume</span>
+                 <span className="text-right">Liquidity</span>
+               </div>
+               {topMarkets.map((market, i) => (
+                 <Link
+                   key={`${market.question}-${i}`}
+                   href="/markets"
                   className={cn(
                     "block px-5 py-4 transition-colors hover:bg-muted",
                     i < topMarkets.length - 1 && "border-b border-border"
@@ -273,21 +328,18 @@ export default function Home() {
                         <span className="text-sm font-mono font-semibold">{market.yes}%</span>
                       </div>
                     </div>
-                    <div className="flex sm:block items-center justify-between mt-1 sm:mt-0">
-                      <span className="sm:hidden text-xs text-muted-foreground">Volume</span>
-                      <span className="text-sm font-mono text-right sm:text-right">{market.volume}</span>
-                    </div>
-                    <div className="hidden sm:flex items-center justify-end">
-                      <span className={cn(
-                        "text-sm font-mono font-semibold",
-                        market.change.startsWith("+") ? "text-up" : "text-down"
-                      )}>
-                        {market.change}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                     <div className="flex sm:block items-center justify-between mt-1 sm:mt-0">
+                       <span className="sm:hidden text-xs text-muted-foreground">Volume</span>
+                       <span className="text-sm font-mono text-right sm:text-right">{market.volume}</span>
+                     </div>
+                     <div className="hidden sm:flex items-center justify-end">
+                       <span className="text-sm font-mono font-semibold text-muted-foreground">
+                         {market.liquidity}
+                       </span>
+                     </div>
+                   </div>
+                 </Link>
+               ))}
             </div>
             <div className="mt-4 text-center sm:hidden">
               <Link href="/markets" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">

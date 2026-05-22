@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { api } from "@/lib/api"
+import { PolymarketBadge } from "@/components/polymarket-badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,42 +21,115 @@ import {
   ZAxis,
 } from "recharts"
 
-const accuracyData = [
-  { month: "Jan", accuracy: 92, signals: 420 },
-  { month: "Feb", accuracy: 91, signals: 480 },
-  { month: "Mar", accuracy: 94, signals: 510 },
-  { month: "Apr", accuracy: 93, signals: 540 },
-  { month: "May", accuracy: 95, signals: 580 },
-  { month: "Jun", accuracy: 94, signals: 600 },
-]
+type AccuracyStats = {
+  total_predictions: number
+  resolved_predictions: number
+  brier_score: number | null
+  win_rate: number | null
+  calibration: { bin: string; avg_predicted: number | null; avg_actual: number | null; count: number }[]
+}
 
-const calibrationData = [
-  { predicted: 10, actual: 8, perfect: 10 },
-  { predicted: 20, actual: 18, perfect: 20 },
-  { predicted: 30, actual: 28, perfect: 30 },
-  { predicted: 40, actual: 38, perfect: 40 },
-  { predicted: 50, actual: 48, perfect: 50 },
-  { predicted: 60, actual: 62, perfect: 60 },
-  { predicted: 70, actual: 72, perfect: 70 },
-  { predicted: 80, actual: 82, perfect: 80 },
-  { predicted: 90, actual: 88, perfect: 90 },
-]
+type ModelPerformance = {
+  model_version: string
+  total_predictions: number
+  resolved_predictions: number
+  avg_brier_score: number | null
+  win_rate: number | null
+  avg_edge: number | null
+}
 
-const modelComparison = [
-  { name: "Ensemble", accuracy: 94.2, brierScore: 0.042, signals: 3200, sharpe: 1.84 },
-  { name: "GPT-4o", accuracy: 91.5, brierScore: 0.051, signals: 2800, sharpe: 1.52 },
-  { name: "Claude 3.5", accuracy: 92.8, brierScore: 0.048, signals: 2900, sharpe: 1.63 },
-  { name: "Gemini", accuracy: 89.2, brierScore: 0.058, signals: 2400, sharpe: 1.31 },
-]
+type ModelsResponse = {
+  models: ModelPerformance[]
+}
 
-const backtestResults = [
-  { strategy: "Top 10 by Edge", return: 42.5, sharpe: 1.92, maxDD: -8.2, trades: 340 },
-  { strategy: "Kelly Sized", return: 38.2, sharpe: 1.84, maxDD: -6.8, trades: 280 },
-  { strategy: "Equal Weight", return: 31.8, sharpe: 1.45, maxDD: -12.4, trades: 310 },
-  { strategy: "High Conviction", return: 45.1, sharpe: 1.71, maxDD: -14.2, trades: 120 },
-]
+type BacktestResult = {
+  strategy: string
+  total_trades: number
+  winning_trades: number
+  win_rate: number
+  total_return_pct: number
+  max_drawdown_pct: number
+  sharpe_ratio: number | null
+}
 
 export default function AnalyticsPage() {
+  const [accuracy, setAccuracy] = useState<AccuracyStats | null>(null)
+  const [models, setModels] = useState<ModelPerformance[]>([])
+  const [backtest, setBacktest] = useState<BacktestResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setIsLoading(true)
+      try {
+        setError(null)
+        const [accuracyData, modelsData] = await Promise.all([
+          api.getAccuracy() as Promise<AccuracyStats>,
+          api.getModels() as Promise<ModelsResponse>,
+        ])
+        setAccuracy(accuracyData)
+        setModels(modelsData.models)
+        try {
+          const backtestData = await api.getBacktest({ strategy: "kelly" }) as BacktestResult
+          setBacktest(backtestData)
+        } catch (err) {
+          setBacktest(null)
+        }
+        setLastUpdated(new Date())
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load analytics")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAnalytics()
+  }, [])
+
+  const accuracyData = useMemo(() => {
+    if (!accuracy?.calibration) return []
+    return accuracy.calibration.map((bucket) => ({
+      month: bucket.bin,
+      accuracy: Math.round(((bucket.avg_actual ?? 0) * 100) * 10) / 10,
+      signals: bucket.count,
+    }))
+  }, [accuracy])
+
+  const calibrationData = useMemo(() => {
+    if (!accuracy?.calibration) return []
+    return accuracy.calibration.map((bucket) => ({
+      predicted: Math.round(((bucket.avg_predicted ?? 0) * 100) * 10) / 10,
+      actual: Math.round(((bucket.avg_actual ?? 0) * 100) * 10) / 10,
+      perfect: Math.round(((bucket.avg_predicted ?? 0) * 100) * 10) / 10,
+    }))
+  }, [accuracy])
+
+  const modelComparison = useMemo(() => {
+    if (!models.length) return []
+    return models.map((model) => ({
+      name: model.model_version,
+      accuracy: model.win_rate ? Math.round(model.win_rate * 1000) / 10 : 0,
+      brierScore: model.avg_brier_score ?? 0,
+      signals: model.total_predictions,
+      sharpe: model.avg_edge ?? 0,
+    }))
+  }, [models])
+
+  const backtestResults = useMemo(() => {
+    if (!backtest) return []
+    return [
+      {
+        strategy: backtest.strategy,
+        return: backtest.total_return_pct,
+        sharpe: backtest.sharpe_ratio ?? 0,
+        maxDD: backtest.max_drawdown_pct,
+        trades: backtest.total_trades,
+      },
+    ]
+  }, [backtest])
+
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
@@ -64,16 +139,29 @@ export default function AnalyticsPage() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+            <PolymarketBadge lastUpdated={lastUpdated} />
+          </div>
           <p className="mt-2 text-muted-foreground">Deep dive into model performance and market analytics</p>
         </motion.div>
 
+        {isLoading && (
+          <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground mb-8">
+            Loading analytics...
+          </div>
+        )}
+        {!isLoading && error && (
+          <div className="rounded-lg border border-border bg-card p-6 text-sm text-down mb-8">
+            {error}
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           {[
-            { label: "Brier Score", value: "0.042", desc: "Lower is better", icon: Target },
-            { label: "Overall Win Rate", value: "94.2%", desc: "Last 30 days", icon: TrendingUp },
-            { label: "Total Signals", value: "3,200+", desc: "All time", icon: BarChart3 },
-            { label: "Avg Edge", value: "+4.8%", desc: "Per signal", icon: Brain },
+            { label: "Brier Score", value: accuracy?.brier_score !== null && accuracy?.brier_score !== undefined ? accuracy.brier_score.toFixed(3) : "--", desc: "Lower is better", icon: Target },
+            { label: "Overall Win Rate", value: accuracy?.win_rate !== null && accuracy?.win_rate !== undefined ? `${(accuracy.win_rate * 100).toFixed(1)}%` : "--", desc: "Last 30 days", icon: TrendingUp },
+            { label: "Total Signals", value: accuracy?.total_predictions ? accuracy.total_predictions.toLocaleString() : "--", desc: "All time", icon: BarChart3 },
+            { label: "Avg Edge", value: models.length ? `${(models.reduce((sum, model) => sum + (model.avg_edge ?? 0), 0) / models.length * 100).toFixed(2)}%` : "--", desc: "Per signal", icon: Brain },
           ].map((item, i) => (
             <FadeInView key={item.label} delay={i * 0.05}>
               <Card className="border-border/50">
@@ -183,7 +271,7 @@ export default function AnalyticsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {modelComparison.map((model) => (
+                        {modelComparison.length ? modelComparison.map((model) => (
                           <tr key={model.name} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                             <td className="py-3 px-3">
                               <div className="flex items-center gap-2">
@@ -199,7 +287,11 @@ export default function AnalyticsPage() {
                             <td className="py-3 px-3 text-right tabular-nums">{model.signals.toLocaleString()}</td>
                             <td className="py-3 px-3 text-right tabular-nums font-medium">{model.sharpe}</td>
                           </tr>
-                        ))}
+                        )) : (
+                          <tr>
+                            <td className="py-4 px-3 text-sm text-muted-foreground" colSpan={5}>No model data yet.</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -231,15 +323,19 @@ export default function AnalyticsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {backtestResults.map((bt) => (
-                            <tr key={bt.strategy} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                              <td className="py-3 px-2 font-medium">{bt.strategy}</td>
-                              <td className="py-3 px-2 text-right text-up font-medium tabular-nums">+{bt.return}%</td>
-                              <td className="py-3 px-2 text-right tabular-nums">{bt.sharpe}</td>
-                              <td className="py-3 px-2 text-right text-down tabular-nums">{bt.maxDD}%</td>
-                              <td className="py-3 px-2 text-right tabular-nums">{bt.trades}</td>
-                            </tr>
-                          ))}
+                        {backtestResults.length ? backtestResults.map((bt) => (
+                          <tr key={bt.strategy} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                            <td className="py-3 px-2 font-medium">{bt.strategy}</td>
+                            <td className="py-3 px-2 text-right text-up font-medium tabular-nums">+{bt.return}%</td>
+                            <td className="py-3 px-2 text-right tabular-nums">{bt.sharpe}</td>
+                            <td className="py-3 px-2 text-right text-down tabular-nums">{bt.maxDD}%</td>
+                            <td className="py-3 px-2 text-right tabular-nums">{bt.trades}</td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td className="py-4 px-2 text-sm text-muted-foreground" colSpan={5}>No backtest data yet.</td>
+                          </tr>
+                        )}
                         </tbody>
                       </table>
                     </div>

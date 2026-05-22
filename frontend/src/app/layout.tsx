@@ -18,6 +18,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Inti Trade Predicto",
   description: "AI-powered prediction market intelligence",
+  icons: {
+    icon: "/icon.svg",
+  },
 }
 
 export default function RootLayout({

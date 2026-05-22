@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Inti Trade Predicto">
+  <rect width="256" height="256" rx="48" fill="#0B0E11"/>
+  <circle cx="128" cy="128" r="74" fill="none" stroke="#FCD535" stroke-width="16"/>
+  <path d="M128 70v116" stroke="#FCD535" stroke-width="16" stroke-linecap="round"/>
+  <path d="M70 128h116" stroke="#FCD535" stroke-width="16" stroke-linecap="round"/>
+  <path d="M96 96l64 64" stroke="#FCD535" stroke-width="14" stroke-linecap="round" opacity="0.7"/>
+</svg>

@@ -36,6 +36,7 @@ export const api = {
 
   getAccuracy: () => fetchAPI('/analytics/accuracy'),
   getModels: () => fetchAPI('/analytics/models'),
+  getBacktest: (params?: Record<string, string>) => fetchAPI(`/analytics/backtest?${new URLSearchParams(params)}`),
 
   getPricing: () => fetchAPI('/pricing'),
   createSubscription: (tier: string) => fetchAPI('/subscriptions/create', { method: 'POST', body: JSON.stringify({ tier }) }),
