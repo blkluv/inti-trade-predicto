@@ -17,36 +17,25 @@ from src.api.analytics import router as analytics_router
 from src.api.subscriptions import router as subscriptions_router
 from src.api.builder_fees import router as builder_fees_router
 from src.providers.polymarket_provider import PolymarketProvider
-from src.agents.data_agent import DataAgent
+from src.agents.orchestrator import AgentOrchestrator
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
+_orchestrator: AgentOrchestrator | None = None
 _polymarket_provider: PolymarketProvider | None = None
-_data_agent: DataAgent | None = None
-_agent_task: asyncio.Task | None = None
-_seed_task: asyncio.Task | None = None
-
-
-async def _seed_markets(agent: DataAgent):
-    try:
-        logger.info("Seeding initial market data from Polymarket…")
-        markets = await agent.collect_market_data()
-        logger.info("Seeded %d markets on startup", len(markets))
-    except Exception as e:
-        logger.warning("Initial market seed failed (non-fatal): %s", e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _polymarket_provider, _data_agent, _agent_task, _seed_task
-
-    _polymarket_provider = PolymarketProvider()
+    global _orchestrator, _polymarket_provider
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    _data_agent = DataAgent(
+    _polymarket_provider = PolymarketProvider()
+
+    _orchestrator = AgentOrchestrator(
         async_session,
         {
             "polymarket": _polymarket_provider,
@@ -54,30 +43,16 @@ async def lifespan(app: FastAPI):
         },
     )
 
-    _seed_task = asyncio.create_task(_seed_markets(_data_agent))
-
     try:
-        _agent_task = asyncio.create_task(_data_agent.start())
-        logger.info("DataAgent background polling started")
+        await _orchestrator.start_all()
     except Exception as e:
-        logger.warning("DataAgent start failed (non-fatal): %s", e)
+        logger.warning("Agent startup failed (non-fatal): %s", e)
 
     try:
         yield
     finally:
-        if _seed_task and not _seed_task.done():
-            _seed_task.cancel()
-        if _agent_task:
-            _agent_task.cancel()
-            try:
-                await _agent_task
-            except asyncio.CancelledError:
-                pass
-        if _seed_task and not _seed_task.done():
-            try:
-                await _seed_task
-            except (asyncio.CancelledError, Exception):
-                pass
+        if _orchestrator:
+            await _orchestrator.stop_all()
         if _polymarket_provider:
             await _polymarket_provider.close()
         await engine.dispose()
