@@ -7,9 +7,7 @@ import { cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { PolymarketBadge } from "@/components/polymarket-badge"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Brain, RefreshCw, TrendingUp, TrendingDown, Clock, Target } from "lucide-react"
+import { Brain, TrendingUp, TrendingDown, Clock, Target } from "lucide-react"
 
 type SignalItem = {
   id: string
@@ -70,97 +68,103 @@ export default function SignalsPage() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6"
-        >
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Signals</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">AI-generated trade signals sorted by edge</p>
-          </div>
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-xl font-bold">Signals</h1>
           <PolymarketBadge lastUpdated={lastUpdated} isRefreshing={isRefreshing} />
-        </motion.div>
+        </div>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Min edge:</span>
-            <Input type="number" value={minEdge} onChange={(e) => setMinEdge(Number(e.target.value))} className="w-16 h-8 text-sm text-center" min={0} max={100} />
+            <input type="number" value={minEdge} onChange={(e) => setMinEdge(Number(e.target.value))}
+              className="w-16 h-8 rounded-lg border border-border bg-card text-sm text-center text-foreground focus:outline-none" min={0} max={100} />
             <span className="text-xs text-muted-foreground">%</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchSignals(false)} disabled={isRefreshing} className="gap-1.5">
-            <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
-            Refresh
-          </Button>
+          <button onClick={() => fetchSignals(false)} disabled={isRefreshing}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-card text-xs text-muted-foreground hover:text-foreground transition-colors">
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
 
         {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-lg border border-border bg-card p-5 animate-pulse">
-                <div className="h-4 w-40 bg-muted rounded mb-3" />
-                <div className="h-3 w-full bg-muted rounded" />
+          <div className="space-y-0">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 py-4 animate-pulse border-b border-border">
+                <div className="w-20 h-6 bg-muted rounded" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 bg-muted rounded" />
+                  <div className="h-3 w-full bg-muted rounded" />
+                </div>
+                <div className="h-3 w-40 bg-muted rounded" />
               </div>
             ))}
           </div>
         ) : error ? (
           <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-down">{error}</div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((signal, i) => (
-              <motion.div
-                key={signal.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-              >
-                <Link href={`/markets/${signal.market_id}`} className="block rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50 group">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
+          <>
+            <div className="divide-y divide-border">
+              {filtered.map((signal, i) => (
+                <motion.div
+                  key={signal.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.01, duration: 0.15 }}
+                >
+                  <Link
+                    href={`/markets/${signal.market_id}`}
+                    className="flex items-center gap-4 py-3.5 px-2 -mx-2 rounded-lg transition-colors hover:bg-muted/40 group"
+                  >
+                    <div className="shrink-0 w-20">
+                      <div className="flex items-center gap-1.5">
                         <Badge variant={signal.recommended_action === "buy" ? "up" : "down"} className="text-[10px]">
-                          {signal.recommended_action === "buy" ? <TrendingUp className="mr-1 h-3 w-3" /> : <TrendingDown className="mr-1 h-3 w-3" />}
+                          {signal.recommended_action === "buy" ? <TrendingUp className="mr-0.5 h-3 w-3" /> : <TrendingDown className="mr-0.5 h-3 w-3" />}
                           {signal.recommended_action.toUpperCase()}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">Market #{signal.market_id.slice(0, 8)}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Model: {signal.model_version}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium leading-snug line-clamp-1">
+                        Market #{signal.market_id.slice(0, 8)}
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                        <span>{signal.model_version}</span>
+                        <span>·</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelative(signal.created_at)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="flex items-center gap-5 shrink-0">
                       <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-0.5">Edge</div>
-                        <span className={cn("text-lg font-bold font-number", signal.edge > 0 ? "text-up" : "text-down")}>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Edge</div>
+                        <span className={cn("text-base font-bold font-number", signal.edge > 0 ? "text-up" : "text-down")}>
                           {signal.edge > 0 ? "+" : ""}{(signal.edge * 100).toFixed(1)}%
                         </span>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-0.5">Confidence</div>
-                        <span className="font-semibold font-number">{Math.round(signal.confidence * 100)}%</span>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Conf</div>
+                        <span className="text-sm font-semibold font-number">{Math.round(signal.confidence * 100)}%</span>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-muted-foreground mb-0.5">AI / Market</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">AI / Mkt</div>
                         <span className="text-sm font-number">
                           <span className="text-primary">{formatPercent(signal.predicted_prob)}</span>
-                          <span className="text-muted-foreground"> / </span>
+                          <span className="text-muted-foreground">/</span>
                           <span>{formatPercent(signal.market_odds)}</span>
                         </span>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
             {filtered.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
-                <Brain className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <Brain className="h-8 w-8 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No signals yet</p>
                 <p className="text-xs mt-1">Signals will appear once AI analysis is running</p>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
