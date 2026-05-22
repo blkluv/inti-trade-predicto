@@ -35,7 +35,7 @@ class DataAgent(BaseAgent):
         self._client = AsyncOpenAI(
             api_key=settings.NVIDIA_API_KEY,
             base_url=settings.NVIDIA_API_URL,
-            timeout=30,
+            timeout=60,
         )
         self._model = settings.NVIDIA_MODEL
 
@@ -262,7 +262,7 @@ class DataAgent(BaseAgent):
                     markets,
                     key=lambda m: m.get("volume_24h", m.get("current_odds", 0)) or 0,
                     reverse=True,
-                )[:20]
+                )[:5]
 
                 logger.info("Analyzing top %d markets with NVIDIA", len(top_markets))
                 analyses = await self._batch_analyze(top_markets)
