@@ -81,56 +81,57 @@ class SignalAgent(BaseAgent):
                     raw_confidence, model_accuracy
                 )
 
+                raw_kelly = self.kelly_criterion(
+                    predicted_prob, market_odds, 10000.0
+                )
+                kelly_fraction = raw_kelly * 0.25
+
+                if kelly_fraction > 0 and calibrated_confidence > 0.3:
+                    action = "buy"
+                elif kelly_fraction <= 0 and abs(edge) > 0.02:
+                    action = "sell"
+                else:
+                    action = "hold"
+
+                signal = Signal(
+                    market_id=market["id"],
+                    predicted_prob=predicted_prob,
+                    market_odds=market_odds,
+                    edge=edge,
+                    confidence=calibrated_confidence,
+                    kelly_fraction=kelly_fraction,
+                    recommended_action=action,
+                    reasoning_trace=analysis.get("reasoning_trace", ""),
+                    model_version=self.MODEL_VERSION,
+                    source_articles=analysis.get("key_factors", []),
+                    key_factors=analysis.get("key_factors", []),
+                    sentiment_score=analysis.get("sentiment_score"),
+                    news_count=analysis.get("news_count", 0),
+                )
+
+                async with self.db_session_factory() as session:
+                    session.add(signal)
+                    await session.commit()
+                    signal_id = signal.id
+
+                logger.info(
+                    "Signal %s for market %s: action=%s edge=%.4f kelly=%.4f",
+                    signal_id,
+                    market["id"],
+                    action,
+                    edge,
+                    kelly_fraction,
+                )
+
                 users = await self._get_users()
                 for user in users:
                     risk = user.risk_profile or {}
                     max_bet_pct = risk.get("max_bet_pct", 0.05)
                     kelly_frac = risk.get("kelly_fraction", 0.25)
                     bankroll = 10000.0
-
-                    raw_kelly = self.kelly_criterion(
-                        predicted_prob, market_odds, bankroll
-                    )
-                    kelly_fraction = raw_kelly * kelly_frac
-
-                    if kelly_fraction > 0 and calibrated_confidence > 0.3:
-                        action = "buy"
-                        size = min(kelly_fraction, bankroll * max_bet_pct)
-                    elif kelly_fraction <= 0 and abs(edge) > 0.02:
-                        action = "sell"
-                        size = 0.0
-                    else:
-                        action = "hold"
-                        size = 0.0
-
-                    signal = Signal(
-                        market_id=market["id"],
-                        predicted_prob=predicted_prob,
-                        market_odds=market_odds,
-                        edge=edge,
-                        confidence=calibrated_confidence,
-                        kelly_fraction=kelly_fraction,
-                        recommended_action=action,
-                        reasoning_trace=analysis.get("reasoning_trace", ""),
-                        model_version=self.MODEL_VERSION,
-                        source_articles=analysis.get("key_factors", []),
-                        key_factors=analysis.get("key_factors", []),
-                        sentiment_score=analysis.get("sentiment_score"),
-                        news_count=analysis.get("news_count", 0),
-                    )
-
-                    async with self.db_session_factory() as session:
-                        session.add(signal)
-                        await session.commit()
-                        signal_id = signal.id
-
-                    logger.info(
-                        "Signal %s for market %s: action=%s edge=%.4f kelly=%.4f",
-                        signal_id,
-                        market["id"],
-                        action,
-                        edge,
-                        kelly_fraction,
+                    user_size = min(
+                        kelly_fraction * kelly_frac,
+                        bankroll * max_bet_pct,
                     )
 
                     await self.notify(
@@ -139,7 +140,7 @@ class SignalAgent(BaseAgent):
                             "signal_id": str(signal_id),
                             "market_id": market["id"],
                             "action": action,
-                            "size": size,
+                            "size": user_size,
                             "edge": edge,
                             "confidence": calibrated_confidence,
                             "user_id": str(user.id),

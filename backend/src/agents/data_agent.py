@@ -235,13 +235,19 @@ class DataAgent(BaseAgent):
             try:
                 markets = await self.collect_market_data()
                 if markets:
-                    articles = await self.collect_news(markets)
+                    top_markets = sorted(
+                        markets,
+                        key=lambda m: m.get("volume_24h", m.get("current_odds", 0)) or 0,
+                        reverse=True,
+                    )[:20]
+
+                    articles = await self.collect_news(top_markets)
                     sentiment = await self.analyze_sentiment(articles)
 
                     await self.notify(
                         "analysis_agent",
                         {
-                            "markets": markets,
+                            "markets": top_markets,
                             "articles": articles,
                             "sentiment": {
                                 k: {
