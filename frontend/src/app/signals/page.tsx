@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { PolymarketBadge } from "@/components/polymarket-badge"
 import { Badge } from "@/components/ui/badge"
-import { Brain, TrendingUp, TrendingDown, Clock, Target } from "lucide-react"
+import { Brain, TrendingUp, TrendingDown, Clock } from "lucide-react"
 
 type SignalItem = {
   id: string
@@ -87,76 +87,69 @@ export default function SignalsPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-0">
+          <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 py-4 animate-pulse border-b border-border">
-                <div className="w-20 h-6 bg-muted rounded" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 bg-muted rounded" />
-                  <div className="h-3 w-full bg-muted rounded" />
-                </div>
-                <div className="h-3 w-40 bg-muted rounded" />
+              <div key={i} className="rounded-xl border border-border/60 bg-neutral-900 p-4 animate-pulse">
+                <div className="h-4 w-24 bg-muted rounded mb-3" />
+                <div className="h-3 w-full bg-muted rounded mb-2" />
+                <div className="h-3 w-3/4 bg-muted rounded" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-down">{error}</div>
+          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-down">{error}</div>
         ) : (
-          <>
-            <div className="divide-y divide-border">
-              {filtered.map((signal, i) => (
-                <motion.div
-                  key={signal.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.01, duration: 0.15 }}
+          <div className="space-y-2">
+            {filtered.map((signal, i) => (
+              <motion.div
+                key={signal.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.015, duration: 0.2 }}
+              >
+                <Link
+                  href={`/markets/${signal.market_id}`}
+                  className="rounded-xl border border-border/60 bg-neutral-900 hover:bg-neutral-800 transition-colors p-4 flex items-center gap-4 group"
                 >
-                  <Link
-                    href={`/markets/${signal.market_id}`}
-                    className="flex items-center gap-4 py-3.5 px-2 -mx-2 rounded-lg transition-colors hover:bg-muted/40 group"
-                  >
-                    <div className="shrink-0 w-20">
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant={signal.recommended_action === "buy" ? "up" : "down"} className="text-[10px]">
-                          {signal.recommended_action === "buy" ? <TrendingUp className="mr-0.5 h-3 w-3" /> : <TrendingDown className="mr-0.5 h-3 w-3" />}
-                          {signal.recommended_action.toUpperCase()}
-                        </Badge>
-                      </div>
+                  <div className="shrink-0">
+                    <Badge variant={signal.recommended_action === "buy" ? "up" : "down"} className="text-[10px]">
+                      {signal.recommended_action === "buy" ? <TrendingUp className="mr-0.5 h-3 w-3" /> : <TrendingDown className="mr-0.5 h-3 w-3" />}
+                      {signal.recommended_action.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                      Market #{signal.market_id.slice(0, 8)}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium leading-snug line-clamp-1">
-                        Market #{signal.market_id.slice(0, 8)}
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                        <span>{signal.model_version}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelative(signal.created_at)}</span>
-                      </div>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                      <span>{signal.model_version}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelative(signal.created_at)}</span>
                     </div>
-                    <div className="flex items-center gap-5 shrink-0">
-                      <div className="text-center">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Edge</div>
-                        <span className={cn("text-base font-bold font-number", signal.edge > 0 ? "text-up" : "text-down")}>
-                          {signal.edge > 0 ? "+" : ""}{(signal.edge * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Conf</div>
-                        <span className="text-sm font-semibold font-number">{Math.round(signal.confidence * 100)}%</span>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">AI / Mkt</div>
-                        <span className="text-sm font-number">
-                          <span className="text-primary">{formatPercent(signal.predicted_prob)}</span>
-                          <span className="text-muted-foreground">/</span>
-                          <span>{formatPercent(signal.market_odds)}</span>
-                        </span>
-                      </div>
+                  </div>
+                  <div className="flex items-center gap-5 shrink-0">
+                    <div className="text-center">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Edge</div>
+                      <span className={cn("text-base font-bold font-number", signal.edge > 0 ? "text-up" : "text-down")}>
+                        {signal.edge > 0 ? "+" : ""}{(signal.edge * 100).toFixed(1)}%
+                      </span>
                     </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="text-center">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Conf</div>
+                      <span className="text-sm font-semibold font-number">{Math.round(signal.confidence * 100)}%</span>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">AI/Mkt</div>
+                      <span className="text-sm font-number">
+                        <span className="text-primary">{formatPercent(signal.predicted_prob)}</span>
+                        <span className="text-muted-foreground">/</span>
+                        <span>{formatPercent(signal.market_odds)}</span>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
             {filtered.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
                 <Brain className="h-8 w-8 mx-auto mb-3 opacity-30" />
@@ -164,7 +157,7 @@ export default function SignalsPage() {
                 <p className="text-xs mt-1">Signals will appear once AI analysis is running</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

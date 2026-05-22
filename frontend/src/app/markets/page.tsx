@@ -6,7 +6,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { PolymarketBadge } from "@/components/polymarket-badge"
-import { Search, TrendingUp, TrendingDown } from "lucide-react"
+import { Search } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 
 type MarketItem = {
@@ -32,6 +32,71 @@ const formatCurrency = (value: number) =>
 const formatPercent = (value: number | null) => {
   if (value === null || Number.isNaN(value)) return "--"
   return `${Math.round(value * 100)}%`
+}
+
+function MarketCard({ market }: { market: MarketItem }) {
+  const odds = market.current_odds !== null ? Math.round(market.current_odds * 100) : null
+  const noOdds = odds !== null ? 100 - odds : null
+  return (
+    <Link
+      href={`/markets/${market.id}`}
+      className="relative flex flex-col justify-between rounded-xl shadow-md shadow-black/4 h-full overflow-hidden pt-3 pb-4 px-3 group/card transition hover:-translate-y-px hover:shadow-black/8 hover:shadow-md bg-neutral-900 hover:bg-neutral-800 border border-border/60"
+    >
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-[10px] font-bold text-muted-foreground uppercase">
+            {market.category?.[0] || "M"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[11px] text-muted-foreground truncate block">
+              {market.category || "General"}
+            </span>
+          </div>
+        </div>
+        <h3 className="text-sm font-medium leading-snug line-clamp-2 mt-1">
+          {market.question}
+        </h3>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <div className="text-center">
+          <div className="text-3xl font-bold font-number tracking-tight">
+            {odds !== null ? `${odds}%` : "--"}
+          </div>
+          <div className="h-1.5 rounded-full bg-neutral-700 mt-1.5 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all", odds !== null && odds >= 50 ? "bg-up" : "bg-down")}
+              style={{ width: `${odds ?? 50}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[11px] text-muted-foreground font-number">
+              {noOdds !== null ? `${noOdds}%` : "--"} NO
+            </span>
+            <span className="text-[11px] font-medium font-number">
+              YES {odds !== null ? `${odds}%` : "--"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground font-number tabular-nums">
+              {formatCurrency(market.volume_24h)} Vol
+            </span>
+          </div>
+          <div className="flex -space-x-1">
+            <div className={cn(
+              "flex items-center justify-center h-6 px-2 rounded text-[10px] font-semibold",
+              odds !== null && odds >= 50 ? "bg-up/15 text-up" : "bg-down/15 text-down"
+            )}>
+              {odds !== null && odds >= 50 ? "YES" : "NO"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 function MarketsPageContent() {
@@ -136,73 +201,35 @@ function MarketsPageContent() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-0">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 py-4 animate-pulse border-b border-border">
-                <div className="w-16 h-8 bg-muted rounded shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 bg-muted rounded" />
-                  <div className="h-4 w-full bg-muted rounded" />
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="rounded-xl shadow-md border border-border/60 bg-neutral-900 p-4 min-h-[200px] animate-pulse">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-8 w-8 rounded-md bg-muted" />
+                  <div className="h-3 w-20 bg-muted rounded" />
                 </div>
-                <div className="h-3 w-32 bg-muted rounded" />
+                <div className="h-4 w-full bg-muted rounded mb-2" />
+                <div className="h-4 w-3/4 bg-muted rounded mb-6" />
+                <div className="h-8 w-16 bg-muted rounded mx-auto mb-2" />
+                <div className="h-1.5 w-full bg-muted rounded mb-1" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-down">{error}</div>
+          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-down">{error}</div>
         ) : (
           <>
-            <div className="divide-y divide-border">
-              {filtered.map((market, i) => {
-                const odds = market.current_odds !== null ? Math.round(market.current_odds * 100) : null
-                const oddsColor = odds !== null ? (odds > 50 ? "text-up" : odds < 50 ? "text-down" : "text-foreground") : "text-muted-foreground"
-                return (
-                  <motion.div
-                    key={market.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.008, duration: 0.15 }}
-                  >
-                    <Link
-                      href={`/markets/${market.id}`}
-                      className="flex items-center gap-4 py-3.5 px-2 -mx-2 rounded-lg transition-colors hover:bg-muted/40 group"
-                    >
-                      <div className={cn("w-16 shrink-0 text-right font-bold font-number text-lg tabular-nums", oddsColor)}>
-                        {odds !== null ? `${odds}%` : "--"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-[11px] text-muted-foreground">
-                            {market.category || "General"}
-                          </span>
-                          {market.resolved && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground">·</span>
-                              <span className="text-[10px] text-down">Resolved</span>
-                            </>
-                          )}
-                        </div>
-                        <div className="text-sm font-medium leading-snug group-hover:text-primary transition-colors line-clamp-1">
-                          {market.question}
-                        </div>
-                      </div>
-                      <div className="hidden sm:flex items-center gap-3 shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                        <span title="24h Volume">{formatCurrency(market.volume_24h)} Vol</span>
-                        <span title="Today">{formatCurrency(market.volume_24h)} today</span>
-                        <span title="Liquidity">{formatCurrency(market.liquidity)} Liq</span>
-                      </div>
-                      <div className="flex flex-col items-end shrink-0 sm:hidden text-[11px] text-muted-foreground tabular-nums">
-                        <span>{formatCurrency(market.volume_24h)}</span>
-                      </div>
-                      <div className="hidden lg:flex items-center gap-1 shrink-0 ml-2">
-                        <span className={cn("text-[11px] font-medium px-1.5 py-0.5 rounded", odds !== null && odds >= 50 ? "text-up bg-up/5" : "text-down bg-down/5")}>
-                          {market.current_odds !== null && market.current_odds >= 0.5 ? "YES" : "NO"}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                )
-              })}
+            <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((market, i) => (
+                <motion.div
+                  key={market.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.01, duration: 0.2 }}
+                >
+                  <MarketCard market={market} />
+                </motion.div>
+              ))}
             </div>
             {filtered.length === 0 && (
               <div className="text-center py-20 text-muted-foreground">
@@ -220,7 +247,7 @@ function MarketsPageContent() {
 
 export default function MarketsPage() {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6"><div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground animate-pulse">Loading markets...</div></div>}>
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6"><div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground animate-pulse">Loading markets...</div></div>}>
       <MarketsPageContent />
     </Suspense>
   )
