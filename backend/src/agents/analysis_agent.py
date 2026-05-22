@@ -10,48 +10,35 @@ from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-ANALYSIS_SYSTEM_PROMPT = """You are an expert prediction market analyst. Given a market question, current odds, news articles, and sentiment scores, estimate the true probability of the outcome.
+BATCH_SYSTEM_PROMPT = """You are analyzing prediction markets. For each market, estimate the true probability.
 
-Think step by step:
-1. Identify the key question and what would need to be true for the outcome to occur.
-2. Evaluate each piece of news — does it increase or decrease the likelihood?
-3. Consider the sentiment signal — is the market overly optimistic or pessimistic?
-4. Weigh the market odds against your own assessment — is there mispricing?
-5. Synthesize into a final probability estimate.
-
-Return a JSON object with exactly these fields:
+Return a JSON array where each element has:
 {
+  "market_id": "string",
   "predicted_prob": <float 0-1>,
   "confidence": <float 0-1>,
-  "reasoning_trace": "<step-by-step reasoning>",
-  "key_factors": ["<factor 1>", "<factor 2>", ...]
-}"""
+  "reasoning": "brief why",
+  "key_factors": ["factor1", "factor2"]
+}
+
+Return ALL markets in a single JSON array. No extra text."""
 
 
-def _build_prompt(market: dict, articles: list[dict], sentiment: dict | None) -> str:
-    parts = [f"## Market Question\n{market.get('question', 'Unknown')}"]
-
-    odds = market.get("current_odds")
-    if odds:
-        parts.append(f"\n## Current Market Odds\n{float(odds) * 100:.1f}%")
-
-    if articles:
-        parts.append("\n## News Articles")
-        for i, a in enumerate(articles[:8], 1):
-            parts.append(f"{i}. **{a.get('title', '')}** — {a.get('description', '')}")
-
-    if sentiment:
-        s = sentiment
+def _build_batch_prompt(markets: list[dict], sentiment_map: dict) -> str:
+    parts = ["Analyze these prediction markets:", ""]
+    for m in markets:
+        mid = m["id"]
+        q = m.get("question", "?")
+        odds = float(m.get("current_odds", 0.5)) * 100
+        s = sentiment_map.get(mid, {})
+        sent = s.get("mean_sentiment", 0)
+        n = s.get("article_count", 0)
         parts.append(
-            f"\n## Sentiment Analysis\n"
-            f"Mean: {s.get('mean_sentiment', 0):+.3f}, "
-            f"Articles: {s.get('article_count', 0)}"
+            f"ID={mid} Odds={odds:.0f}% Sentiment={sent:+.2f} Articles={n}"
         )
-
-    parts.append(
-        "\n## Task\nPredict the true probability of the described outcome. "
-        "Return ONLY valid JSON with the four fields specified."
-    )
+        parts.append(f"Q: {q}")
+        parts.append("")
+    parts.append("Return a JSON array of analyses, one per market.")
     return "\n".join(parts)
 
 
@@ -64,20 +51,20 @@ class AnalysisAgent(BaseAgent):
         )
         self._model = settings.NVIDIA_MODEL
 
-    async def analyze_market(
-        self, market: dict, articles: list[dict], sentiment: dict | None
-    ) -> dict:
-        prompt = _build_prompt(market, articles, sentiment)
+    async def _batch_analyze(
+        self, markets: list[dict], sentiment_map: dict
+    ) -> list[dict]:
+        prompt = _build_batch_prompt(markets, sentiment_map)
 
         try:
             resp = await self._client.chat.completions.create(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
+                    {"role": "system", "content": BATCH_SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,
-                max_tokens=1024,
+                max_tokens=2048,
                 response_format={"type": "json_object"},
             )
 
@@ -85,36 +72,36 @@ class AnalysisAgent(BaseAgent):
             if not raw:
                 raise ValueError("Empty LLM response")
 
-            parsed = json.loads(raw)
+            data = json.loads(raw)
+            results = data if isinstance(data, list) else data.get("analyses", data.get("markets", [data]))
+            if not isinstance(results, list):
+                results = [results]
 
-            result = {
-                "predicted_prob": float(parsed.get("predicted_prob", 0.5)),
-                "confidence": float(parsed.get("confidence", 0.0)),
-                "reasoning_trace": parsed.get("reasoning_trace", ""),
-                "key_factors": parsed.get("key_factors", []),
-            }
+            parsed = []
+            market_ids = {m["id"] for m in markets}
+            for r in results:
+                mid = r.get("market_id")
+                if mid not in market_ids:
+                    continue
+                parsed.append({
+                    "market_id": mid,
+                    "predicted_prob": max(0.01, min(0.99, float(r.get("predicted_prob", 0.5)))),
+                    "confidence": max(0.0, min(1.0, float(r.get("confidence", 0)))),
+                    "reasoning_trace": r.get("reasoning", r.get("reasoning_trace", "")),
+                    "key_factors": r.get("key_factors", []),
+                    "sentiment_score": float(r.get("sentiment_score", 0)),
+                    "news_count": int(r.get("news_count", 0)),
+                })
 
-            result["predicted_prob"] = max(0.01, min(0.99, result["predicted_prob"]))
-            result["confidence"] = max(0.0, min(1.0, result["confidence"]))
-
-            logger.info(
-                "Analysis for market %s: prob=%.3f conf=%.3f",
-                market.get("id", "?"),
-                result["predicted_prob"],
-                result["confidence"],
-            )
-            return result
+            logger.info("Batch analyzed %d/%d markets", len(parsed), len(markets))
+            return parsed
 
         except Exception as e:
-            logger.error("LLM analysis failed for %s: %s", market.get("id"), e)
-            return {
-                "predicted_prob": 0.5,
-                "confidence": 0.0,
-                "reasoning_trace": f"Analysis error: {e}",
-                "key_factors": [],
-            }
+            logger.error("Batch analysis failed: %s", e)
+            return []
 
     async def run(self) -> None:
+        logger.info("AnalysisAgent run loop started")
         queue = await self.listen("analysis_agent")
 
         while self._running:
@@ -122,27 +109,23 @@ class AnalysisAgent(BaseAgent):
                 payload_raw = await queue.get()
                 payload = json.loads(payload_raw)
                 markets = payload.get("markets", [])
-                articles = payload.get("articles", [])
                 sentiment_map = payload.get("sentiment", {})
 
-                for market in markets:
-                    mid = market["id"]
-                    market_articles = [
-                        a for a in articles if a.get("market_id") == mid
-                    ]
-                    market_sentiment = sentiment_map.get(mid)
-                    analysis = await self.analyze_market(
-                        market, market_articles, market_sentiment
-                    )
+                if not markets:
+                    continue
 
-                    await self.notify(
-                        "signal_agent",
-                        {
-                            "market": market,
-                            "analysis": analysis,
-                            "timestamp": datetime.now(timezone.utc).isoformat(),
-                        },
-                    )
+                analyses = await self._batch_analyze(markets, sentiment_map)
+
+                market_map = {m["id"]: m for m in markets}
+                for a in analyses:
+                    market = market_map.get(a["market_id"])
+                    if not market:
+                        continue
+                    await self.notify("signal_agent", {
+                        "market": market,
+                        "analysis": a,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
 
             except asyncio.CancelledError:
                 break
