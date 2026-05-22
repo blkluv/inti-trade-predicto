@@ -217,12 +217,19 @@ class DataAgent(BaseAgent):
                 max_tokens=1024,
             )
             raw = resp.choices[0].message.content
-            logger.warning("NVIDIA API response received (%d chars)", len(raw or ""))
+            logger.warning("NVIDIA API response received (%d chars) prefix: %s", len(raw or ""), (raw or "")[:200])
 
             if not raw:
                 raise ValueError("Empty LLM response")
 
-            data = json.loads(raw)
+            cleaned = raw.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("\n", 1)[-1] if "\n" in cleaned else cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned.rsplit("```", 1)[0]
+            cleaned = cleaned.strip()
+
+            data = json.loads(cleaned)
             results = data if isinstance(data, list) else data.get("signals", data.get("analyses", data.get("markets", [data])))
             if not isinstance(results, list):
                 results = [results]
