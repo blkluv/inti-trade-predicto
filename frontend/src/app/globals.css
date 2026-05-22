@@ -31,43 +31,42 @@
   --color-down: hsl(var(--down));
   --color-yellow: hsl(var(--yellow));
   --color-yellow-foreground: hsl(var(--yellow-foreground));
-  --color-light-bg: hsl(var(--light-bg));
-  --color-light-foreground: hsl(var(--light-foreground));
-  --color-light-muted: hsl(var(--light-muted));
-  --color-light-border: hsl(var(--light-border));
+  --color-brand: hsl(var(--brand));
+  --color-surface: hsl(var(--surface));
+  --color-surface-hover: hsl(var(--surface-hover));
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
 }
 
 :root {
-  --background: 0 0% 7%;
+  --background: 228 7% 5%;
   --foreground: 0 0% 93%;
-  --card: 0 0% 11%;
+  --card: 228 7% 8%;
   --card-foreground: 0 0% 93%;
-  --popover: 0 0% 13%;
+  --popover: 228 7% 10%;
   --popover-foreground: 0 0% 93%;
-  --primary: 45 97% 60%;
-  --primary-foreground: 0 0% 7%;
-  --secondary: 0 0% 11%;
+  --primary: 224 100% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 228 7% 10%;
   --secondary-foreground: 0 0% 93%;
-  --muted: 0 0% 15%;
+  --muted: 228 7% 13%;
   --muted-foreground: 0 0% 50%;
   --accent: 45 97% 60%;
-  --accent-foreground: 0 0% 7%;
-  --destructive: 352 91% 62%;
+  --accent-foreground: 228 7% 5%;
+  --destructive: 0 83% 58%;
   --destructive-foreground: 0 0% 100%;
   --up: 154 86% 43%;
   --down: 0 83% 58%;
   --yellow: 45 97% 60%;
-  --yellow-foreground: 0 0% 7%;
-  --light-bg: 0 0% 98%;
-  --light-foreground: 0 0% 14%;
-  --light-muted: 0 0% 56%;
-  --light-border: 0 0% 90%;
+  --yellow-foreground: 228 7% 5%;
+  --brand: 224 100% 58%;
+  --surface: 228 7% 10%;
+  --surface-hover: 228 7% 14%;
   --border: 0 0% 18%;
   --input: 0 0% 18%;
-  --ring: 45 97% 60%;
+  --ring: 224 100% 58%;
   --radius: 0.75rem;
 }
 
@@ -77,6 +76,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   ::selection {
     background: hsl(var(--primary) / 0.3);
@@ -107,13 +107,17 @@
 .stagger-4 { animation: slide-up-fade 0.4s ease-out 0.4s both; }
 
 .pm-card {
-  @apply rounded-lg border border-border bg-card transition-colors hover:border-muted-foreground/30;
-}
-
-.pm-card-content {
-  @apply p-4;
+  @apply rounded-xl border border-border bg-card transition-all hover:border-muted-foreground/30 hover:shadow-md hover:-translate-y-px;
 }
 
 .pm-gradient {
   background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, transparent 50%);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
