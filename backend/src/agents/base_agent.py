@@ -26,9 +26,13 @@ class BaseAgent:
 
     async def notify(self, channel: str, payload: dict) -> None:
         pool = await self._get_pool()
+        msg = json.dumps(payload)
+        if len(msg) > 7800:
+            logger.warning("Payload %d bytes exceeds pg_notify limit for %s; truncating", len(msg), channel)
+            msg = json.dumps({"ids": [m.get("id") for m in payload.get("markets", [])[:20]], "count": len(payload.get("markets", [])), "truncated": True, "timestamp": payload.get("timestamp", "")})
         async with pool.acquire() as conn:
-            await conn.execute("SELECT pg_notify($1, $2)", channel, json.dumps(payload))
-        logger.debug("Notified %s: %s", channel, payload)
+            await conn.execute("SELECT pg_notify($1, $2)", channel, msg)
+        logger.debug("Notified %s: %s", channel, msg[:200])
 
     async def listen(self, channel: str) -> asyncpg.Connection:
         from src.core.config import settings
