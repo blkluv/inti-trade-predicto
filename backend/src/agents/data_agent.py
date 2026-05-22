@@ -1,8 +1,9 @@
 import asyncio
+import json
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from src.agents.base_agent import BaseAgent
 from src.models.market import Market, MarketPrice
@@ -11,6 +12,60 @@ logger = logging.getLogger(__name__)
 
 
 class DataAgent(BaseAgent):
+    @staticmethod
+    def _parse_list(value) -> list:
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @staticmethod
+    def _coerce_float(value) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _normalize_market_fields(self, item: dict) -> tuple[list, float | None]:
+        outcomes_raw = self._parse_list(item.get("outcomes"))
+        outcome_prices = self._parse_list(item.get("outcomePrices"))
+
+        if outcomes_raw and isinstance(outcomes_raw[0], dict):
+            outcomes = outcomes_raw
+        else:
+            outcomes = [{"name": str(o)} for o in outcomes_raw]
+
+        current_odds = self._coerce_float(item.get("bestPrice"))
+        if current_odds is None:
+            current_odds = self._coerce_float(item.get("price"))
+
+        if current_odds is None and outcome_prices:
+            prices = [self._coerce_float(p) for p in outcome_prices]
+            prices = [p for p in prices if p is not None]
+            if prices:
+                current_odds = prices[0]
+
+        if current_odds is None and outcomes:
+            if isinstance(outcomes[0], dict):
+                probabilities = [
+                    self._coerce_float(o.get("probability"))
+                    for o in outcomes
+                    if isinstance(o, dict)
+                ]
+                probabilities = [p for p in probabilities if p is not None]
+                if probabilities:
+                    current_odds = max(probabilities)
+
+        return outcomes, current_odds
+
     async def collect_market_data(self) -> list[dict]:
         pm_provider = self.providers.get("polymarket")
         if pm_provider is None:
@@ -24,17 +79,17 @@ class DataAgent(BaseAgent):
 
         markets = []
         async with self.db_session_factory() as session:
+            if raw:
+                await session.execute(
+                    delete(Market).where(Market.id.like("predscope_%"))
+                )
+
             for item in raw:
                 market_id = item.get("id") or item.get("conditionId")
                 if not market_id:
                     continue
 
-                outcomes = item.get("outcomes", [])
-                current_odds = item.get("bestPrice") or item.get("price")
-                if current_odds is None and outcomes:
-                    current_odds = max(
-                        (o.get("probability", 0) for o in outcomes), default=None
-                    )
+                outcomes, current_odds = self._normalize_market_fields(item)
 
                 market = Market(
                     id=str(market_id),
@@ -74,12 +129,7 @@ class DataAgent(BaseAgent):
                 market_id = item.get("id") or item.get("conditionId")
                 if not market_id:
                     continue
-                current_odds = item.get("bestPrice") or item.get("price")
-                outcomes = item.get("outcomes", [])
-                if current_odds is None and outcomes:
-                    current_odds = max(
-                        (o.get("probability", 0) for o in outcomes), default=None
-                    )
+                outcomes, current_odds = self._normalize_market_fields(item)
                 if current_odds is not None:
                     price_entry = MarketPrice(
                         market_id=str(market_id),
