@@ -13,29 +13,19 @@ from src.models.signal import Signal
 
 logger = logging.getLogger(__name__)
 
-BATCH_PROMPT = """You are analyzing prediction markets. For each market, estimate the true probability.
+BATCH_PROMPT = """Analyze these prediction markets. Return a JSON object with a "signals" key containing an array of:
+{"market_id": "id", "predicted_prob": 0-1, "confidence": 0-1, "reasoning": "why", "key_factors": ["factor"]}
 
-Return a JSON array where each element has:
-{
-  "market_id": "string",
-  "predicted_prob": <float 0-1>,
-  "confidence": <float 0-1>,
-  "reasoning": "brief why",
-  "key_factors": ["factor1", "factor2"]
-}
-
-Return ALL markets in a single JSON array. No extra text."""
+Markets:"""
 
 
 def _build_batch_prompt(markets: list[dict]) -> str:
-    parts = ["Analyze these prediction markets:", ""]
+    parts = [BATCH_PROMPT]
     for m in markets:
         q = m.get("question", "?")
         odds = float(m.get("current_odds", 0.5)) * 100
-        parts.append(f"ID={m['id']} Odds={odds:.0f}%")
-        parts.append(f"Q: {q}")
-        parts.append("")
-    parts.append("Return a JSON array of analyses, one per market.")
+        parts.append(f"- {m['id']}: {q} (odds {odds:.0f}%)")
+    parts.append("\nReturn valid JSON only.")
     return "\n".join(parts)
 
 
@@ -45,6 +35,7 @@ class DataAgent(BaseAgent):
         self._client = AsyncOpenAI(
             api_key=settings.NVIDIA_API_KEY,
             base_url=settings.NVIDIA_API_URL,
+            timeout=30,
         )
         self._model = settings.NVIDIA_MODEL
 
@@ -215,22 +206,24 @@ class DataAgent(BaseAgent):
     async def _batch_analyze(self, markets: list[dict]) -> list[dict]:
         prompt = _build_batch_prompt(markets)
         try:
+            logger.warning("Calling NVIDIA API for %d markets...", len(markets))
             resp = await self._client.chat.completions.create(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": BATCH_PROMPT},
+                    {"role": "system", "content": "You are a prediction market analyst. Return JSON."},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,
-                max_tokens=2048,
-                response_format={"type": "json_object"},
+                max_tokens=1024,
             )
             raw = resp.choices[0].message.content
+            logger.warning("NVIDIA API response received (%d chars)", len(raw or ""))
+
             if not raw:
                 raise ValueError("Empty LLM response")
 
             data = json.loads(raw)
-            results = data if isinstance(data, list) else data.get("analyses", data.get("markets", [data]))
+            results = data if isinstance(data, list) else data.get("signals", data.get("analyses", data.get("markets", [data])))
             if not isinstance(results, list):
                 results = [results]
 
@@ -248,7 +241,7 @@ class DataAgent(BaseAgent):
                     "key_factors": r.get("key_factors", []),
                 })
 
-            logger.info("Batch analyzed %d/%d markets", len(parsed), len(markets))
+            logger.warning("Batch analyzed %d/%d markets", len(parsed), len(markets))
             return parsed
 
         except Exception as e:
